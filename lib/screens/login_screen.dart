@@ -1,3 +1,4 @@
+import 'package:doc_appoint_frontend/screens/patient_home_screen.dart';
 import 'package:flutter/material.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -20,10 +21,16 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _submitForm() {
+
+// context works here because it is inside a State class (StatefulWidget). Inside a State<T> class, Flutter automatically provides a context getter.
+  void _onLoginPressed() {
     if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Registration Successful")),
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PatientHomeScreen(token: "token"),
+        ),
+        (route)=> false, // prevents going back to register again after success because it is still there in the stack as we followed this route: register-push-> login.
       );
     }
   }
@@ -31,22 +38,37 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text("Create account", style: TextStyle(color: Colors.white, fontSize: 45, fontWeight: FontWeight.bold),),
+        centerTitle: true,
+        backgroundColor: const Color.fromARGB(255, 6, 24, 39),
+        iconTheme: const IconThemeData(
+          color: Colors.white,
+        ),
+        toolbarHeight: 100,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Text("Sign in to begin"),
+            SizedBox(height: 30),
+            CircleAvatar(
+              radius: 75,
+              backgroundColor: Colors.grey[300],
+              child: Text("Logo"),
+            ),
+            SizedBox(height: 30),
             Form(
               key: _formKey,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,              
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   TextFormField(
                     controller: _nameController,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(),
                       labelText: "Full Name",
-                      hintText: "First Middle Last"
+                      hintText: "First Middle Last",
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -66,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     decoration: InputDecoration(
                       border: OutlineInputBorder(),
                       labelText: "Password",
-                      hintText: "asCjiV34%#"
+                      hintText: "asCjiV34%#",
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -82,11 +104,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 30),
 
                   ElevatedButton(
-                    onPressed: _submitForm, 
+                    onPressed: _onLoginPressed,
                     child: Text("Login"),
                   ),
                   const SizedBox(height: 10),
-                  
                 ],
               ),
             ),
