@@ -13,16 +13,17 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
     Slot(startTime: "09:00", endTime: "09:30", status: "available"),
     Slot(startTime: "09:00", endTime: "09:30", status: "available"),
     Slot(startTime: "09:30", endTime: "10:00", status: "booked"),
+    Slot(startTime: "09:00", endTime: "09:30", status: "booked"),
+    Slot(startTime: "10:00", endTime: "10:30", status: "frozen"),
+    Slot(startTime: "09:00", endTime: "09:30", status: "available"),
+    Slot(startTime: "10:30", endTime: "11:00", status: "frozen"),
     Slot(startTime: "09:00", endTime: "09:30", status: "available"),
     Slot(startTime: "10:00", endTime: "10:30", status: "frozen"),
     Slot(startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(startTime: "10:30", endTime: "11:00", status: "available"),
     Slot(startTime: "09:00", endTime: "09:30", status: "available"),
     Slot(startTime: "10:00", endTime: "10:30", status: "frozen"),
-    Slot(startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(startTime: "10:00", endTime: "10:30", status: "frozen"),
-    Slot(startTime: "09:00", endTime: "09:30", status: "available"),
+    Slot(startTime: "09:00", endTime: "09:30", status: "booked"),
+    Slot(startTime: "09:00", endTime: "09:30", status: "completed"),
   ];
   @override
   Widget build(BuildContext context) {
@@ -47,7 +48,7 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
             Container(
               height: 50,
               alignment: Alignment.center,
-              color: Colors.white,
+              color: Color(0xFFDCE6F1),
               child: Text(
                 "Check out your Slots",
                 style: TextStyle(
@@ -75,10 +76,10 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
                       vertical: 4,
                       horizontal: 5,
                     ),
-                    color: (status=="available")? Colors.green 
-                    : (status=="booked")? Colors.redAccent
-                    : (status=="frozen")? Colors.blueGrey
-                    : Colors.lightBlue,
+                    color: (status=="available")? const Color(0xFF4CAF7A) 
+                    : (status=="booked")? const Color(0xFFE57373)
+                    : (status=="frozen")? const Color(0xFFB0BEC5)
+                    : const Color(0xFF5C9ED8),
                     child: ListTile(
                       title: Text("${slot.startTime} - ${slot.endTime}", style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),),
                       subtitle: Text("Status: $status", style: TextStyle(fontSize: 15, color: Colors.white),),
@@ -98,8 +99,9 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
         tooltip: "Create slots",
         backgroundColor: Colors.white,
         foregroundColor: const Color.fromARGB(255, 6, 24, 39),
-        child: Icon(Icons.create, size: 45),
+        child: Icon(Icons.add, size: 45),
       ),
+      backgroundColor: Color(0xFFDCE6F1),
     );
   }
 }

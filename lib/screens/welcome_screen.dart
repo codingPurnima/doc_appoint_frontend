@@ -18,7 +18,7 @@ class WelcomeScreen extends StatelessWidget {
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
-                fontSize: 100,
+                fontSize: 70,
               ),
             ),
           ),
@@ -35,7 +35,6 @@ class WelcomeScreen extends StatelessWidget {
           },
           tooltip: 'Begin',
           backgroundColor: const Color.fromARGB(255, 6, 24, 39),
-          splashColor: const Color.fromARGB(245, 241, 227, 227),
           child: Icon(Icons.start_rounded, color: Colors.white, size: 80),
         ),
       ),

@@ -66,7 +66,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextFormField(
                     controller: _nameController,
                     decoration: InputDecoration(
-                      border: OutlineInputBorder(),
                       labelText: "Full Name",
                       hintText: "First Middle Last",
                     ),
@@ -86,7 +85,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _passwordController,
                     obscureText: true,
                     decoration: InputDecoration(
-                      border: OutlineInputBorder(),
                       labelText: "Password",
                       hintText: "asCjiV34%#",
                     ),
@@ -104,9 +102,23 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 30),
 
                   ElevatedButton(
-                    onPressed: _onLoginPressed,
-                    child: Text("Login"),
-                  ),
+                      onPressed: _onLoginPressed,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 6, 24, 39),
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 10, horizontal: 5),
+                        fixedSize: Size(125, 15),                   
+                        elevation: 5,
+                      ),
+                      child: const Text(
+                        "Login",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ),
                   const SizedBox(height: 10),
                 ],
               ),
@@ -114,7 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
         ),
       ),
-      backgroundColor: const Color.fromARGB(26, 213, 196, 196),
+      backgroundColor: const Color(0xFFDCE6F1),
     );
   }
 }
