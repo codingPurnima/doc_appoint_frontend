@@ -1,9 +1,9 @@
+import 'package:doc_appoint_frontend/services/api_service.dart';
 import 'package:flutter/material.dart';
 import '../models/slot.dart';
 
 class PatientHomeScreen extends StatefulWidget {
-  final String token;
-  const PatientHomeScreen({super.key, required this.token});
+  const PatientHomeScreen({super.key});
 
   @override
   State<PatientHomeScreen> createState() => _PatientHomeScreenState();
@@ -13,31 +13,30 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   @override
   void initState() {
     super.initState();
+    fetchSlots();
   }
 
-  List<Slot> slots = [
-    Slot(startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(startTime: "09:30", endTime: "10:00", status: "booked"),
-    Slot(startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(startTime: "10:00", endTime: "10:30", status: "frozen"),
-    Slot(startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(startTime: "10:30", endTime: "11:00", status: "available"),
-    Slot(startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(startTime: "09:30", endTime: "10:00", status: "booked"),
-    Slot(startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(startTime: "10:00", endTime: "10:30", status: "frozen"),
-    Slot(startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(startTime: "10:30", endTime: "11:00", status: "available"),
-    Slot(startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(startTime: "09:30", endTime: "10:00", status: "booked"),
-    Slot(startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(startTime: "10:00", endTime: "10:30", status: "frozen"),
-    Slot(startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(startTime: "10:30", endTime: "11:00", status: "available"),
-  ];
+  List<Slot> slots = [];
+  bool isLoading = true;
+
+  Future<void> fetchSlots() async {
+    final apiService = ApiService();
+
+    final today = DateTime.now().toIso8601String().split("T")[0];
+
+    final result = await apiService.getAvailableSlots(today);
+
+    if (result != null) {
+      setState(() {
+        slots = result.map<Slot>((json) => Slot.fromJson(json)).toList();
+    isLoading = false;
+      });
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   void _bookSlot(Slot slot) {
     showDialog(
@@ -82,8 +81,9 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     );
   }
 
+  // SOON
   // void _buildDoctorDialog(BuildContext context) {
-    
+
   // }
 
   @override
@@ -126,34 +126,39 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                 ),
               ),
             ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: availableSlots.length,
-                itemBuilder: (BuildContext context, int index) {
-                  final slot = availableSlots[index];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(
-                      vertical: 8,
-                      horizontal: 10,
-                    ),
-                    color: const Color(0xFF0E2A47),
-                    child: ListTile(
-                      title: Text(
-                        "${slot.startTime} - ${slot.endTime}",
-                        style: TextStyle(color: Colors.white, fontSize: 20),
+            if (isLoading)
+              const Center(child: CircularProgressIndicator())
+            else if (slots.isEmpty)
+              const Center(child: Text("No slots available today"))
+            else
+              Expanded(
+                child: ListView.builder(
+                  itemCount: availableSlots.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    final slot = availableSlots[index];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 10,
                       ),
-                      trailing: TextButton(
-                        onPressed: () => _bookSlot(slot),
-                        child: Text(
-                          "Tap to Book",
-                          style: TextStyle(color: Colors.white, fontSize: 15),
+                      color: const Color(0xFF0E2A47),
+                      child: ListTile(
+                        title: Text(
+                          "${slot.startTime} - ${slot.endTime}",
+                          style: TextStyle(color: Colors.white, fontSize: 20),
+                        ),
+                        trailing: TextButton(
+                          onPressed: () => _bookSlot(slot),
+                          child: Text(
+                            "Tap to Book",
+                            style: TextStyle(color: Colors.white, fontSize: 15),
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -161,9 +166,8 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
         onPressed: () {
           showDialog(
             context: context,
-            builder: (context) => AlertDialog(
-              title: Text("This is your doctor"),
-            ),
+            builder: (context) =>
+                AlertDialog(title: Text("This is your doctor")),
           );
         },
         backgroundColor: Color(0xFFDCE6F1),

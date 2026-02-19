@@ -1,4 +1,5 @@
 import 'package:doc_appoint_frontend/screens/patient_home_screen.dart';
+import 'package:doc_appoint_frontend/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -14,6 +15,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  // bool isLoading = false; ADD LATER
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -21,17 +24,30 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-
-// context works here because it is inside a State class (StatefulWidget). Inside a State<T> class, Flutter automatically provides a context getter.
-  void _onLoginPressed() {
+  // context works here because it is inside a State class (StatefulWidget). Inside a State<T> class, Flutter automatically provides a context getter.
+  void _onLoginPressed() async {
     if (_formKey.currentState!.validate()) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PatientHomeScreen(token: "token"),
-        ),
-        (route)=> false, // prevents going back to register again after success because it is still there in the stack as we followed this route: register-push-> login.
+      final authService = AuthService();
+
+      final token = await authService.login(
+        _nameController.text.trim(),
+        _passwordController.text.trim(),
       );
+
+      if (token!= null) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PatientHomeScreen(),
+          ),
+          (route) =>
+              false, // prevents going back to register again after success because it is still there in the stack as we followed this route: register-push-> login.
+        );
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Login failed")));
+      }
     }
   }
 
@@ -39,12 +55,17 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Create account", style: TextStyle(color: Colors.white, fontSize: 45, fontWeight: FontWeight.bold),),
+        title: Text(
+          "Create account",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 45,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         centerTitle: true,
         backgroundColor: const Color.fromARGB(255, 6, 24, 39),
-        iconTheme: const IconThemeData(
-          color: Colors.white,
-        ),
+        iconTheme: const IconThemeData(color: Colors.white),
         toolbarHeight: 100,
       ),
       body: Padding(
@@ -102,23 +123,26 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 30),
 
                   ElevatedButton(
-                      onPressed: _onLoginPressed,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 6, 24, 39),
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(vertical: 10, horizontal: 5),
-                        fixedSize: Size(125, 15),                   
-                        elevation: 5,
+                    onPressed: _onLoginPressed,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 6, 24, 39),
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(
+                        vertical: 10,
+                        horizontal: 5,
                       ),
-                      child: const Text(
-                        "Login",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
-                        ),
+                      fixedSize: Size(125, 15),
+                      elevation: 5,
+                    ),
+                    child: const Text(
+                      "Login",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
                       ),
                     ),
+                  ),
                   const SizedBox(height: 10),
                 ],
               ),

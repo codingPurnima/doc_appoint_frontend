@@ -10,20 +10,20 @@ class DoctorHomeScreen extends StatefulWidget {
 
 class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
   List<Slot> slots = [
-    Slot(startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(startTime: "09:30", endTime: "10:00", status: "booked"),
-    Slot(startTime: "09:00", endTime: "09:30", status: "booked"),
-    Slot(startTime: "10:00", endTime: "10:30", status: "frozen"),
-    Slot(startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(startTime: "10:30", endTime: "11:00", status: "frozen"),
-    Slot(startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(startTime: "10:00", endTime: "10:30", status: "frozen"),
-    Slot(startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(startTime: "10:00", endTime: "10:30", status: "frozen"),
-    Slot(startTime: "09:00", endTime: "09:30", status: "booked"),
-    Slot(startTime: "09:00", endTime: "09:30", status: "completed"),
+    Slot(id: 1, startTime: "09:00", endTime: "09:30", status: "available"),
+    Slot(id: 1,startTime: "09:00", endTime: "09:30", status: "available"),
+    Slot(id: 1,startTime: "09:30", endTime: "10:00", status: "booked"),
+    Slot(id: 1,startTime: "09:00", endTime: "09:30", status: "booked"),
+    Slot(id: 1,startTime: "10:00", endTime: "10:30", status: "frozen"),
+    Slot(id: 1,startTime: "09:00", endTime: "09:30", status: "available"),
+    Slot(id: 1,startTime: "10:30", endTime: "11:00", status: "frozen"),
+    Slot(id: 1,startTime: "09:00", endTime: "09:30", status: "available"),
+    Slot(id: 1,startTime: "10:00", endTime: "10:30", status: "frozen"),
+    Slot(id: 1,startTime: "09:00", endTime: "09:30", status: "available"),
+    Slot(id: 1,startTime: "09:00", endTime: "09:30", status: "available"),
+    Slot(id: 1,startTime: "10:00", endTime: "10:30", status: "frozen"),
+    Slot(id: 1,startTime: "09:00", endTime: "09:30", status: "booked"),
+    Slot(id: 1,startTime: "09:00", endTime: "09:30", status: "completed"),
   ];
   @override
   Widget build(BuildContext context) {
