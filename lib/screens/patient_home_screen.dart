@@ -29,7 +29,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     if (result != null) {
       setState(() {
         slots = result.map<Slot>((json) => Slot.fromJson(json)).toList();
-    isLoading = false;
+        isLoading = false;
       });
     } else {
       setState(() {
@@ -59,20 +59,25 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             child: Text("Cancel"),
           ),
           ElevatedButton(
-            onPressed: () {
-              setState(() {
-                slot.status = "booked";
-              });
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  backgroundColor: Color.fromARGB(255, 15, 50, 79),
-                  // behavior: SnackBarBehavior.floating,
-                  content: Text(
-                    "Booking Successful. Try to reach 10 mins earlier than your time",
+              final success = await ApiService().bookAppointment(slot.id);
+              if (success) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    backgroundColor: Color.fromARGB(255, 15, 50, 79),
+                    // behavior: SnackBarBehavior.floating,
+                    content: Text(
+                      "Booking Successful. Try to reach 10 mins earlier than your time",
+                    ),
                   ),
-                ),
-              );
+                );
+                fetchSlots();
+              } else {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text("Booking Failed")));
+              }
             },
             child: Text("Confirm"),
           ),
