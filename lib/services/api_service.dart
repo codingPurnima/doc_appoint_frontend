@@ -1,7 +1,5 @@
 import 'dart:convert';
-import 'package:doc_appoint_frontend/services/auth_service.dart';
 import 'package:http/http.dart' as http;
-// import '../models/slot.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
