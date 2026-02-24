@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:doc_appoint_frontend/services/auth_service.dart';
 import 'package:http/http.dart' as http;
 // import '../models/slot.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -50,29 +51,27 @@ class ApiService {
       },
     );
 
-
     if (response.statusCode == 200) {
-    return jsonDecode(response.body);
+      return jsonDecode(response.body);
+    }
+
+    return null;
   }
 
-  return null;
+  Future<bool> bookAppointment(int slotId) async {
+    final token = await getToken();
+    if (token == null) {
+      return false;
+    }
+    final response = await http.post(
+      Uri.parse("$baseUrl/appointments/book"),
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({"slot_id": slotId}),
+    );
+
+    return response.statusCode == 201;
   }
 }
-
-
-
-//   static Future<void> bookSlot(String token, int slotId) async {
-//     final response = await http.post(
-//       Uri.parse("$baseUrl/bookings"),
-//       headers: {
-//         "Authorization": "Bearer $token",
-//         "Content-Type": "application/json",
-//       },
-//       body: jsonEncode({"slot_id": slotId}),
-//     );
-
-//     if (response.statusCode != 200 && response.statusCode != 201) {
-//       throw Exception("Booking failed");
-//     }
-//   }
-// }

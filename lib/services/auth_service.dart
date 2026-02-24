@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 
 class AuthService {
+  static String? _token;
   final String baseUrl = ApiService.baseUrl;
 
   Future<bool> register(String username, String phone, String password) async {
@@ -32,6 +33,7 @@ class AuthService {
       final token = data["access_token"];
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString("token", token);
+      AuthService.setToken(token);
       return token;
     }
 
@@ -42,4 +44,10 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove("token");
   }
+
+  static void setToken(String token) {
+    _token = token;
+  }
+
+  static String? get token => _token;
 }
