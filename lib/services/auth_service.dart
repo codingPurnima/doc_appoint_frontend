@@ -7,6 +7,17 @@ class AuthService {
   static String? _token;
   final String baseUrl = ApiService.baseUrl;
 
+  Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedToken = prefs.getString("token");
+
+    if (storedToken != null) {
+      _token = storedToken;
+    }
+
+    return storedToken;
+  }
+
   Future<bool> register(String username, String phone, String password) async {
     final response = await http.post(
       Uri.parse("$baseUrl/register"),
@@ -43,6 +54,7 @@ class AuthService {
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove("token");
+    _token = null;
   }
 
   static void setToken(String token) {
