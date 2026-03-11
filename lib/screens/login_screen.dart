@@ -1,4 +1,4 @@
-import 'package:doc_appoint_frontend/screens/patient_home_screen.dart';
+import 'package:doc_appoint_frontend/screens/patient_main_screen.dart';
 import 'package:doc_appoint_frontend/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
@@ -38,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (context) => PatientHomeScreen(),
+            builder: (context) => PatientMainScreen(),
           ),
           (route) =>
               false, // prevents going back to register again after success because it is still there in the stack as we followed this route: register-push-> login.
@@ -56,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Create account",
+          "Login",
           style: TextStyle(
             color: Colors.white,
             fontSize: 45,

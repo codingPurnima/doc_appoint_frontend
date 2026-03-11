@@ -42,7 +42,6 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        // title: Text("Confirm Booking"),
         title: Row(
           children: const [
             Icon(Icons.event_available, color: Color(0xFF061827)),

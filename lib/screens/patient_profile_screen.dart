@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:doc_appoint_frontend/screens/login_screen.dart';
 import 'package:doc_appoint_frontend/services/api_service.dart';
 import 'package:doc_appoint_frontend/services/auth_service.dart';
 import 'package:flutter/material.dart';
@@ -34,6 +35,18 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
         appointments = jsonDecode(appointmentResponse.body);
         isLoading = false;
       });
+    } else if (userResponse.statusCode == 401) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Oops! Seems like your session expired. Please login again")),
+      );
+      await AuthService().logout();
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => LoginScreen()),
+        (route) => false,
+      );
+      return;
     } else {
       setState(() {
         isLoading = false;
@@ -134,31 +147,35 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
               ),
               const SizedBox(height: 10),
               Expanded(
-              child: appointments.isEmpty
-                  ? const Center(child: Text("No appointments yet"))
-                  : ListView.builder(
-                      itemCount: appointments.length,
-                      itemBuilder: (context, index) {
-                        final appointment = appointments[index];
+                child: appointments.isEmpty
+                    ? const Center(child: Text("No appointments yet"))
+                    : ListView.builder(
+                        itemCount: appointments.length,
+                        itemBuilder: (context, index) {
+                          final appointment = appointments[index];
 
-                        return Card(
-                          margin: const EdgeInsets.symmetric(vertical: 8),
-                          child: ListTile(
-                            title: Text(
-                                "${appointment["date"]} | ${appointment["start_time"]} - ${appointment["end_time"]}"),
-                            subtitle: Text("Status: ${appointment["status"]}"),
-                            trailing: appointment["status"] == "booked"
-                                ? TextButton(
-                                    onPressed: () =>
-                                        cancelAppointment(appointment["appointment_id"]),
-                                    child: const Text("Cancel"),
-                                  )
-                                : null,
-                          ),
-                        );
-                      },
-                    ),
-            ),
+                          return Card(
+                            margin: const EdgeInsets.symmetric(vertical: 8),
+                            child: ListTile(
+                              title: Text(
+                                "${appointment["date"]} | ${appointment["start_time"]} - ${appointment["end_time"]}",
+                              ),
+                              subtitle: Text(
+                                "Status: ${appointment["status"]}",
+                              ),
+                              trailing: appointment["status"] == "booked"
+                                  ? TextButton(
+                                      onPressed: () => cancelAppointment(
+                                        appointment["appointment_id"],
+                                      ),
+                                      child: const Text("Cancel"),
+                                    )
+                                  : null,
+                            ),
+                          );
+                        },
+                      ),
+              ),
             ],
           ),
         ),

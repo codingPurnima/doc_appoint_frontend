@@ -1,5 +1,4 @@
 import 'package:doc_appoint_frontend/screens/login_screen.dart';
-import 'package:doc_appoint_frontend/screens/patient_home_screen.dart';
 import 'package:doc_appoint_frontend/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
@@ -29,23 +28,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
       final authService = AuthService();
+
       final success = await authService.register(
         _nameController.text.trim(),
         _mobileController.text.trim(),
         _passwordController.text.trim(),
       );
-      if(success){
+
+      if (!mounted) return;
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Registration Successful. Please Login")),
+        );
+        
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      } else {
         ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Registration Successful")));
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PatientHomeScreen(),
-        ),
-      );
+          context,
+        ).showSnackBar(const SnackBar(content: Text("User exists already")));
       }
-      
     }
   }
 
