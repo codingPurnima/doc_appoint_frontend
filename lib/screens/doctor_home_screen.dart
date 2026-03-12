@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:doc_appoint_frontend/models/slot.dart';
+import 'package:doc_appoint_frontend/services/api_service.dart';
 import 'package:flutter/material.dart';
 
 class DoctorHomeScreen extends StatefulWidget {
@@ -9,22 +12,62 @@ class DoctorHomeScreen extends StatefulWidget {
 }
 
 class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
-  List<Slot> slots = [
-    Slot(id: 1, startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(id: 1,startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(id: 1,startTime: "09:30", endTime: "10:00", status: "booked"),
-    Slot(id: 1,startTime: "09:00", endTime: "09:30", status: "booked"),
-    Slot(id: 1,startTime: "10:00", endTime: "10:30", status: "frozen"),
-    Slot(id: 1,startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(id: 1,startTime: "10:30", endTime: "11:00", status: "frozen"),
-    Slot(id: 1,startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(id: 1,startTime: "10:00", endTime: "10:30", status: "frozen"),
-    Slot(id: 1,startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(id: 1,startTime: "09:00", endTime: "09:30", status: "available"),
-    Slot(id: 1,startTime: "10:00", endTime: "10:30", status: "frozen"),
-    Slot(id: 1,startTime: "09:00", endTime: "09:30", status: "booked"),
-    Slot(id: 1,startTime: "09:00", endTime: "09:30", status: "completed"),
-  ];
+  List<Slot> slots = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchSlots();
+  }
+
+  Future<void> fetchSlots() async {
+    final api = ApiService();
+    final today = DateTime.now().toIso8601String().split("T")[0];
+    final response = await api.getRequest("/slots?date=$today");
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        slots = data.map<Slot>((json) => Slot.fromJson(json)).toList();
+        isLoading = false;
+      });
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Widget buildLegend() {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        legendItem("Available", const Color(0xFF4CAF7A)),
+        legendItem("Booked", const Color(0xFFE57373)),
+        legendItem("Frozen", const Color(0xFFB0BEC5)),
+        legendItem("Completed", const Color(0xFF5C9ED8)),
+      ],
+    ),
+  );
+}
+
+Widget legendItem(String label, Color color) {
+  return Row(
+    children: [
+      Container(
+        width: 15,
+        height: 15,
+        color: color,
+      ),
+      const SizedBox(width: 5),
+      Text(label),
+    ],
+  );
+}
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,6 +88,7 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
         padding: const EdgeInsets.all(5.0),
         child: Column(
           children: [
+            buildLegend(),
             Container(
               height: 50,
               alignment: Alignment.center,
@@ -59,6 +103,9 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
               ),
             ),
 
+            if(isLoading) const Center(child: CircularProgressIndicator(),)
+            else if(slots.isEmpty) const Center(child: Text("No slots generated yet"),)
+            else
             Expanded(
               child: GridView.builder(
                 gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
@@ -76,21 +123,33 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
                       vertical: 4,
                       horizontal: 5,
                     ),
-                    color: (status=="available")? const Color(0xFF4CAF7A) 
-                    : (status=="booked")? const Color(0xFFE57373)
-                    : (status=="frozen")? const Color(0xFFB0BEC5)
-                    : const Color(0xFF5C9ED8),
+                    color: (status == "available")
+                        ? const Color(0xFF4CAF7A)
+                        : (status == "booked")
+                        ? const Color(0xFFE57373)
+                        : (status == "frozen")
+                        ? const Color(0xFFB0BEC5)
+                        : const Color(0xFF5C9ED8),
                     child: ListTile(
-                      title: Text("${slot.startTime} - ${slot.endTime}", style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),),
-                      subtitle: Text("Status: $status", style: TextStyle(fontSize: 15, color: Colors.white),),
-                      onTap: (){
-
-                      },
+                      title: Text(
+                        "${slot.startTime} - ${slot.endTime}",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: Text(
+                        "Status: $status",
+                        style: TextStyle(fontSize: 15, color: Colors.white),
+                      ),
+                      onTap: () {},
                     ),
                   );
                 },
-              ),
+              ),              
             ),
+            
           ],
         ),
       ),
