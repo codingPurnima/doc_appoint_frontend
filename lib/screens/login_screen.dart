@@ -1,5 +1,7 @@
 import 'package:doc_appoint_frontend/screens/patient_main_screen.dart';
+import 'package:doc_appoint_frontend/screens/register_screen.dart';
 import 'package:doc_appoint_frontend/services/auth_service.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -144,6 +146,28 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
+                  RichText(
+                    text: TextSpan(
+                      text: "Not registered? ",
+                      style: TextStyle(color: Colors.black, fontSize: 15),
+                      children: [
+                        TextSpan(
+                          text: 'Create Account',
+                          style: TextStyle(color: Colors.blueAccent, fontSize: 20),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () {
+                              // Navigate to Login Screen
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => RegisterScreen(),
+                                ),
+                              );
+                            },
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),

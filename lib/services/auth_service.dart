@@ -4,18 +4,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 
 class AuthService {
-  static String? _token;
+  static String? _accessToken;
+  static String? _refreshToken;
   final String baseUrl = ApiService.baseUrl;
+  static bool get isLoggedIn => _accessToken != null;
 
-  Future<String?> getToken() async {
+  Future<void> loadTokens() async {
     final prefs = await SharedPreferences.getInstance();
-    final storedToken = prefs.getString("token");
-
-    if (storedToken != null) {
-      _token = storedToken;
-    }
-
-    return storedToken;
+    _accessToken = prefs.getString("access_token");
+    _refreshToken = prefs.getString("refresh_token");
   }
 
   Future<bool> register(String username, String phone, String password) async {
@@ -41,11 +38,16 @@ class AuthService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      final token = data["access_token"];
+      final accessToken = data["access_token"];
+      final refreshToken = data["refresh_token"];
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString("token", token);
-      AuthService.setToken(token);
-      return token;
+      await prefs.setString("access_token", accessToken);
+      await prefs.setString("refresh_token", refreshToken);
+      // AuthService.setToken(token);
+
+      _accessToken = accessToken;
+      _refreshToken = refreshToken;
+      return accessToken;
     }
 
     return null;
@@ -53,13 +55,39 @@ class AuthService {
 
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove("token");
-    _token = null;
+
+    await prefs.remove("access_token");
+    await prefs.remove("refresh_token");
+
+    _accessToken = null;
+    _refreshToken = null;
   }
 
-  static void setToken(String token) {
-    _token = token;
+  Future<String?> refreshAccessToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final refreshToken = prefs.getString("refresh_token");
+
+    if (refreshToken == null) return null;
+
+    final response = await http.post(
+      Uri.parse("$baseUrl/auth/refresh"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"refresh_token": refreshToken}),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final newAccessToken = data["access_token"];
+
+      await prefs.setString("access_token", newAccessToken);
+      _accessToken = newAccessToken;
+
+      return newAccessToken;
+    }
+
+    return null;
   }
 
-  static String? get token => _token;
+  static String? get accessToken => _accessToken;
+  static String? get refreshToken => _refreshToken;
 }

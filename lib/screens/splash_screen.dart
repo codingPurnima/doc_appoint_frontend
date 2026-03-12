@@ -1,5 +1,5 @@
+import 'package:doc_appoint_frontend/screens/login_screen.dart';
 import 'package:doc_appoint_frontend/screens/patient_main_screen.dart';
-import 'package:doc_appoint_frontend/screens/register_screen.dart';
 import 'package:doc_appoint_frontend/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
@@ -21,22 +21,34 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> checkLogin() async {
-    final token = await AuthService().getToken();
-    await Future.delayed(const Duration(milliseconds: 500));
+  final authService = AuthService();
 
-    if (!mounted) return;
-    if (token != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const PatientMainScreen()),
-      );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => RegisterScreen()),
-      );
-    }
+  // Load tokens from SharedPreferences
+  await authService.loadTokens();
+
+  String? token = AuthService.accessToken;
+
+  // If access token missing, try refreshing
+  if (token == null) {
+    token = await authService.refreshAccessToken();
   }
+
+  await Future.delayed(const Duration(milliseconds: 300));
+
+  if (!mounted) return;
+
+  if (AuthService.isLoggedIn) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const PatientMainScreen()),
+    );
+  } else {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+    );
+  }
+}
 
   @override
   Widget build(BuildContext context) {
