@@ -29,7 +29,26 @@ class AuthService {
     return response.statusCode == 201;
   }
 
-  Future<String?> login(String username, String password) async {
+  Future<bool> registerDoctor(
+    String username,
+    String phone,
+    String password,
+    String secret,
+  ) async {
+    final response = await http.post(
+      Uri.parse("$baseUrl/register/doctor?secret=$secret"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "username": username,
+        "phone": phone,
+        "password": password,
+      }),
+    );
+
+    return response.statusCode == 200;
+  }
+
+  Future<Map<String, String>?> login(String username, String password) async {
     final response = await http.post(
       Uri.parse("$baseUrl/login"),
       headers: {"Content-Type": "application/x-www-form-urlencoded"},
@@ -38,16 +57,23 @@ class AuthService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
+
       final accessToken = data["access_token"];
       final refreshToken = data["refresh_token"];
+      final role = data["role"];
+
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString("access_token", accessToken);
       await prefs.setString("refresh_token", refreshToken);
-      // AuthService.setToken(token);
+      await prefs.setString("role", role);
 
       _accessToken = accessToken;
       _refreshToken = refreshToken;
-      return accessToken;
+
+      return {
+        "access_token": accessToken,
+        "role": role,
+      };
     }
 
     return null;
