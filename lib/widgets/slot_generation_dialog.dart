@@ -1,118 +1,62 @@
 import 'package:flutter/material.dart';
-import '../models/slot.dart';
+import '../services/api_service.dart';
 
-class SlotGenerationDialog extends StatefulWidget {
-  final Function(List<Slot>) onSlotsGenerated;
+class GenerateSlotsDialog extends StatefulWidget {
+  final VoidCallback onSlotsGenerated;
 
-  const SlotGenerationDialog({super.key, required this.onSlotsGenerated});
+  const GenerateSlotsDialog({super.key, required this.onSlotsGenerated});
 
   @override
-  State<SlotGenerationDialog> createState() => _SlotGenerationDialogState();
+  State<GenerateSlotsDialog> createState() => _GenerateSlotsDialogState();
 }
 
-class _SlotGenerationDialogState extends State<SlotGenerationDialog> {
+class _GenerateSlotsDialogState extends State<GenerateSlotsDialog> {
+  final startController = TextEditingController();
+  final endController = TextEditingController();
 
-  TimeOfDay? startTime;
-  TimeOfDay? endTime;
-  final TextEditingController durationController = TextEditingController();
+  Future<void> generateSlots() async {
+    final today = DateTime.now().toIso8601String().split("T")[0];
 
-  Future<void> pickTime(bool isStart) async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
+    final response = await ApiService().postRequest(
+      "/slots/generate",
+      {
+        "date": today,
+        "day_start": startController.text,
+        "day_end": endController.text,
+        "slot_duration_minutes": 30,
+        "breaks": []
+      },
     );
 
-    if (picked != null) {
-      setState(() {
-        if (isStart) {
-          startTime = picked;
-        } else {
-          endTime = picked;
-        }
-      });
+    if (response.statusCode == 200) {
+      widget.onSlotsGenerated();
+
+      if (mounted) {
+        Navigator.pop(context);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Slots generated successfully")),
+        );
+      }
     }
-  }
-
-  List<Slot> generateSlots() {
-    List<Slot> slots = [];
-
-    if (startTime == null || endTime == null) return slots;
-
-    int duration = int.tryParse(durationController.text) ?? 0;
-    if (duration <= 0) return slots;
-
-    DateTime start = DateTime(
-      0,
-      0,
-      0,
-      startTime!.hour,
-      startTime!.minute,
-    );
-
-    DateTime end = DateTime(
-      0,
-      0,
-      0,
-      endTime!.hour,
-      endTime!.minute,
-    );
-
-    while (start.add(Duration(minutes: duration)).isBefore(end) ||
-        start.add(Duration(minutes: duration)).isAtSameMomentAs(end)) {
-
-      DateTime slotEnd = start.add(Duration(minutes: duration));
-
-      String timeLabel =
-          "${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')} - "
-          "${slotEnd.hour.toString().padLeft(2, '0')}:${slotEnd.minute.toString().padLeft(2, '0')}";
-
-      slots.add(Slot(startTime: timeLabel, endTime:timeLabel, status: "available"));
-
-      start = slotEnd;
-    }
-
-    return slots;
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text("Generate Slots"),
-      content: SingleChildScrollView(
-        child: Column(
-          children: [
-
-            ElevatedButton(
-              onPressed: () => pickTime(true),
-              child: Text(
-                startTime == null
-                    ? "Select Start Time"
-                    : "Start: ${startTime!.format(context)}",
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            ElevatedButton(
-              onPressed: () => pickTime(false),
-              child: Text(
-                endTime == null
-                    ? "Select End Time"
-                    : "End: ${endTime!.format(context)}",
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            TextField(
-              controller: durationController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: "Slot Duration (minutes)",
-              ),
-            ),
-          ],
-        ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: startController,
+            decoration: const InputDecoration(labelText: "Start Time (09:00)"),
+          ),
+          TextField(
+            controller: endController,
+            decoration: const InputDecoration(labelText: "End Time (12:00)"),
+          ),
+        ],
       ),
       actions: [
         TextButton(
@@ -120,15 +64,10 @@ class _SlotGenerationDialogState extends State<SlotGenerationDialog> {
           child: const Text("Cancel"),
         ),
         ElevatedButton(
-          onPressed: () {
-            List<Slot> slots = generateSlots();
-            widget.onSlotsGenerated(slots);
-            Navigator.pop(context);
-          },
+          onPressed: generateSlots,
           child: const Text("Generate"),
         ),
       ],
     );
   }
 }
-                                            
