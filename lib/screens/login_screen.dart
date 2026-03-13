@@ -1,3 +1,4 @@
+import 'package:doc_appoint_frontend/screens/doctor_home_screen.dart';
 import 'package:doc_appoint_frontend/screens/patient_main_screen.dart';
 import 'package:doc_appoint_frontend/screens/register_screen.dart';
 import 'package:doc_appoint_frontend/services/auth_service.dart';
@@ -31,20 +32,32 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_formKey.currentState!.validate()) {
       final authService = AuthService();
 
-      final token = await authService.login(
+      final result = await authService.login(
         _nameController.text.trim(),
         _passwordController.text.trim(),
       );
 
-      if (token!= null) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (context) => PatientMainScreen(),
-          ),
-          (route) =>
-              false, // prevents going back to register again after success because it is still there in the stack as we followed this route: register-push-> login.
-        );
+      if (result != null) {
+        final accessToken = result["access_token"];
+        final role = result["role"];
+
+        if(accessToken != null){
+            if(role=="patient"){
+              Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => PatientMainScreen()),
+              (route) =>
+                  false, // prevents going back to register again after success because it is still there in the stack as we followed this route: register-push-> login.
+              );
+            }else if(role=="doctor"){
+              Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => DoctorHomeScreen()),
+              (route) =>
+                  false, // prevents going back to register again after success because it is still there in the stack as we followed this route: register-push-> login.
+              );
+          }
+        }       
       } else {
         ScaffoldMessenger.of(
           context,
@@ -153,7 +166,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         TextSpan(
                           text: 'Create Account',
-                          style: TextStyle(color: Colors.blueAccent, fontSize: 20),
+                          style: TextStyle(
+                            color: Colors.blueAccent,
+                            fontSize: 20,
+                          ),
                           recognizer: TapGestureRecognizer()
                             ..onTap = () {
                               // Navigate to Login Screen

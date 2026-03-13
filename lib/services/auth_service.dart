@@ -6,6 +6,7 @@ import 'api_service.dart';
 class AuthService {
   static String? _accessToken;
   static String? _refreshToken;
+  static String? _role;
   final String baseUrl = ApiService.baseUrl;
   static bool get isLoggedIn => _accessToken != null;
 
@@ -13,6 +14,7 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     _accessToken = prefs.getString("access_token");
     _refreshToken = prefs.getString("refresh_token");
+    _role = prefs.getString("role");
   }
 
   Future<bool> register(String username, String phone, String password) async {
@@ -69,11 +71,9 @@ class AuthService {
 
       _accessToken = accessToken;
       _refreshToken = refreshToken;
+      _role = role;
 
-      return {
-        "access_token": accessToken,
-        "role": role,
-      };
+      return {"access_token": accessToken, "role": role};
     }
 
     return null;
@@ -116,4 +116,5 @@ class AuthService {
 
   static String? get accessToken => _accessToken;
   static String? get refreshToken => _refreshToken;
+  static String? get role => _role;
 }

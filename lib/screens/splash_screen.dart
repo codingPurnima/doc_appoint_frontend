@@ -1,3 +1,4 @@
+import 'package:doc_appoint_frontend/screens/doctor_home_screen.dart';
 import 'package:doc_appoint_frontend/screens/login_screen.dart';
 import 'package:doc_appoint_frontend/screens/patient_main_screen.dart';
 import 'package:doc_appoint_frontend/services/auth_service.dart';
@@ -21,34 +22,41 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> checkLogin() async {
-  final authService = AuthService();
+    final authService = AuthService();
 
-  // Load tokens from SharedPreferences
-  await authService.loadTokens();
+    // Load tokens from SharedPreferences
+    await authService.loadTokens();
 
-  String? token = AuthService.accessToken;
+    String? token = AuthService.accessToken;
+    String? role = AuthService.role;
 
-  // If access token missing, try refreshing
-  if (token == null) {
-    token = await authService.refreshAccessToken();
+    // If access token missing, try refreshing
+    if (token == null) {
+      token = await authService.refreshAccessToken();
+    }
+
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    if (!mounted) return;
+
+    if (AuthService.isLoggedIn && role=="doctor") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const DoctorHomeScreen()),
+      );
+    } else if (AuthService.isLoggedIn && role=="patient") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const PatientMainScreen()),
+      );
+    }
+    else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    }
   }
-
-  await Future.delayed(const Duration(milliseconds: 300));
-
-  if (!mounted) return;
-
-  if (AuthService.isLoggedIn) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const PatientMainScreen()),
-    );
-  } else {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-    );
-  }
-}
 
   @override
   Widget build(BuildContext context) {
