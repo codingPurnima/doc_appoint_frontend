@@ -15,6 +15,7 @@ class DoctorHomeScreen extends StatefulWidget {
 class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
   List<Slot> slots = [];
   bool isLoading = true;
+  final api = ApiService();
 
   @override
   void initState() {
@@ -23,7 +24,7 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
   }
 
   Future<void> fetchSlots() async {
-    final api = ApiService();
+    
     final today = DateTime.now().toIso8601String().split("T")[0];
     final response = await api.getRequest("/slots?date=$today");
 
@@ -117,7 +118,7 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
                   itemBuilder: (context, index) {
                     final slot = slots[index];
                     final status = slots[index].status;
-                    return Card(
+                    return Container(
                       margin: const EdgeInsets.symmetric(
                         vertical: 4,
                         horizontal: 5,
@@ -142,7 +143,21 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
                           "Status: $status",
                           style: TextStyle(fontSize: 15, color: Colors.white),
                         ),
-                        onTap: () {},
+                        onTap: () async{
+                        if (slot.status == "available" || slot.status == "frozen") {
+                          try {
+                            await api.toggleFreezeSlot(slot.id);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("Slot updated"))
+                            );
+                            fetchSlots(); 
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("Error updating slot"))
+                            );
+                          }
+                        }
+                      },
                       ),
                     );
                   },
