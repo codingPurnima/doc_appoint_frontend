@@ -44,7 +44,7 @@ class ApiService {
   ) async {
     String? token = await getToken();
 
-    var response= await http.post(
+    var response = await http.post(
       Uri.parse("$baseUrl$endpoint"),
       headers: {
         "Content-Type": "application/json",
@@ -53,22 +53,22 @@ class ApiService {
       body: jsonEncode(body),
     );
     if (response.statusCode == 401) {
-    final authService = AuthService();
-    final newToken = await authService.refreshAccessToken();
+      final authService = AuthService();
+      final newToken = await authService.refreshAccessToken();
 
-    if (newToken != null) {
-      response = await http.post(
-        Uri.parse("$baseUrl$endpoint"),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $newToken",
-        },
-        body: jsonEncode(body),
-      );
+      if (newToken != null) {
+        response = await http.post(
+          Uri.parse("$baseUrl$endpoint"),
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer $newToken",
+          },
+          body: jsonEncode(body),
+        );
+      }
     }
-  }
 
-  return response;
+    return response;
   }
 
   Future<http.Response> putRequest(
@@ -77,7 +77,7 @@ class ApiService {
   ) async {
     String? token = await getToken();
 
-    var response= await http.put(
+    var response = await http.put(
       Uri.parse("$baseUrl$endpoint"),
       headers: {
         "Content-Type": "application/json",
@@ -98,6 +98,40 @@ class ApiService {
             "Authorization": "Bearer $newToken",
           },
           body: jsonEncode(body),
+        );
+      }
+    }
+
+    return response;
+  }
+
+  Future<http.Response> patchRequest(
+    String endpoint,
+    Map<String, dynamic> data,
+  ) async {
+    String? token = await getToken();
+
+    var response = await http.patch(
+      Uri.parse("$baseUrl$endpoint"),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+      body: jsonEncode(data),
+    );
+
+    if (response.statusCode == 401) {
+      final authService = AuthService();
+      final newToken = await authService.refreshAccessToken();
+
+      if (newToken != null) {
+        response = await http.patch(
+          Uri.parse("$baseUrl$endpoint"),
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer $newToken",
+          },
+          body: jsonEncode(data),
         );
       }
     }
@@ -138,5 +172,15 @@ class ApiService {
     );
 
     return response.statusCode == 201;
+  }
+
+  Future<void> toggleFreezeSlot(int slotId) async {
+    final response = await patchRequest(
+      "/slots/$slotId/freeze",
+      {},
+    );
+      if (response.statusCode != 200) {
+      throw Exception("Failed to toggle slot freeze");
+    }
   }
 }
