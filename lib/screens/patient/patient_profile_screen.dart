@@ -60,17 +60,48 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   }
 
   Future<void> cancelAppointment(int appointmentId) async {
-    final response = await ApiService().putRequest(
-      "/appointments/$appointmentId/cancel",
-      {},
-    );
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Cancel?"),
+        content: Text("Are you sure you want to cancel this appointment?"),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final response = await ApiService().putRequest(
+                "/appointments/$appointmentId/cancel",
+                {},
+              );
+              Navigator.pop(context);
+              // Navigator.pushNamedAndRemoveUntil(context, "/", (route) => false);
 
-    if (response.statusCode == 200) {
-      fetchProfileData();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Appointment cancelled")));
-    }
+              if (response.statusCode == 200) {
+                fetchProfileData();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Appointment cancelled")),
+                );
+              }
+            },
+            child: Text("Yes"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("No"),
+          ),
+        ],
+      ),
+    );
+    // final response = await ApiService().putRequest(
+    //   "/appointments/$appointmentId/cancel",
+    //   {},
+    // );
+
+    // if (response.statusCode == 200) {
+    //   fetchProfileData();
+    //   ScaffoldMessenger.of(
+    //     context,
+    //   ).showSnackBar(const SnackBar(content: Text("Appointment cancelled")));
+    // }
   }
 
   Future<void> logout() async {
