@@ -18,17 +18,20 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
   List<dynamic> appointments = [];
   bool isLoading = true;
 
+  @override
+  void initState() {
+    super.initState();
+    fetchProfileData();
+  }
 
   Future<void> fetchProfileData() async {
     final api = ApiService();
     final userResponse = await api.getRequest("/users/me");
-    final appointmentResponse = await api.getRequest("/appointments/me");
+    
 
-    if (userResponse.statusCode == 200 &&
-        appointmentResponse.statusCode == 200) {
+    if (userResponse.statusCode == 200) {
       setState(() {
         user = jsonDecode(userResponse.body);
-        appointments = jsonDecode(appointmentResponse.body);
         isLoading = false;
       });
     } else if (userResponse.statusCode == 401) {
@@ -79,9 +82,14 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
     );
   }
 
-  
   @override
   Widget build(BuildContext context) {
-    return ProfileScreen(user: user, appointments: appointments, isLoading: isLoading, onLogout: logout, title: "Doctor Profile");
+    return ProfileScreen(
+      user: user,
+      appointments: appointments,
+      isLoading: isLoading,
+      onLogout: logout,
+      title: "Doctor Profile",
+    );
   }
 }

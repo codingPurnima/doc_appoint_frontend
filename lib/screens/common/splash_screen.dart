@@ -1,5 +1,5 @@
-import 'package:doc_appoint_frontend/screens/doctor/doctor_home_screen.dart';
 import 'package:doc_appoint_frontend/screens/common/login_screen.dart';
+import 'package:doc_appoint_frontend/screens/doctor/doctor_main_screen.dart';
 import 'package:doc_appoint_frontend/screens/patient/patient_main_screen.dart';
 import 'package:doc_appoint_frontend/services/auth_service.dart';
 import 'package:flutter/material.dart';
@@ -40,7 +40,7 @@ class _SplashScreenState extends State<SplashScreen> {
     if (AuthService.isLoggedIn && role=="doctor") {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const DoctorHomeScreen()),
+        MaterialPageRoute(builder: (_) => const DoctorMainScreen()),
       );
     } else if (AuthService.isLoggedIn && role=="patient") {
       Navigator.pushReplacement(

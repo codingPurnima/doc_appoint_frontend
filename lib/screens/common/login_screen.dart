@@ -1,4 +1,4 @@
-import 'package:doc_appoint_frontend/screens/doctor/doctor_home_screen.dart';
+import 'package:doc_appoint_frontend/screens/doctor/doctor_main_screen.dart';
 import 'package:doc_appoint_frontend/screens/patient/patient_main_screen.dart';
 import 'package:doc_appoint_frontend/screens/common/register_screen.dart';
 import 'package:doc_appoint_frontend/services/auth_service.dart';
@@ -52,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
             }else if(role=="doctor"){
               Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => DoctorHomeScreen()),
+              MaterialPageRoute(builder: (context) => DoctorMainScreen()),
               (route) =>
                   false, // prevents going back to register again after success because it is still there in the stack as we followed this route: register-push-> login.
               );
@@ -198,4 +198,3 @@ class _LoginScreenState extends State<LoginScreen> {
 
 
 
-// const Color.fromARGB(255, 6, 24, 39)
