@@ -1,18 +1,19 @@
+import 'package:doc_appoint_frontend/screens/doctor/doctor_home_screen.dart';
+import 'package:doc_appoint_frontend/screens/doctor/doctor_profile_screen.dart';
 import 'package:flutter/material.dart';
-import 'patient_home_screen.dart';
-import 'patient_profile_screen.dart';
+
 import '../common/main_screen.dart';
 
 
-class PatientMainScreen extends StatelessWidget {
-  const PatientMainScreen({super.key});
+class DoctorMainScreen extends StatelessWidget {
+  const DoctorMainScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MainScreen(
       screens: const [
-        PatientHomeScreen(),
-        PatientProfileScreen(),
+        DoctorHomeScreen(),
+        DoctorProfileScreen(),
       ],
       navItems: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
