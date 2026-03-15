@@ -91,17 +91,6 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
         ],
       ),
     );
-    // final response = await ApiService().putRequest(
-    //   "/appointments/$appointmentId/cancel",
-    //   {},
-    // );
-
-    // if (response.statusCode == 200) {
-    //   fetchProfileData();
-    //   ScaffoldMessenger.of(
-    //     context,
-    //   ).showSnackBar(const SnackBar(content: Text("Appointment cancelled")));
-    // }
   }
 
   Future<void> logout() async {
@@ -140,7 +129,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
       isLoading: isLoading,
       title: "Patient Profile",
       onLogout: logout,
-      onCancelAppointment: cancelAppointment,
+      onCancelOrCompleteAppointment: cancelAppointment,
     );
   }
 }
