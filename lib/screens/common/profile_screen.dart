@@ -5,7 +5,7 @@ class ProfileScreen extends StatelessWidget {
   final List<dynamic> appointments;
   final bool isLoading;
   final VoidCallback onLogout;
-  final Function(int)? onCancelAppointment;
+  final Function(int)? onCancelOrCompleteAppointment;
   final String title;
 
   const ProfileScreen({
@@ -15,7 +15,7 @@ class ProfileScreen extends StatelessWidget {
     required this.isLoading,
     required this.onLogout,
     required this.title,
-    this.onCancelAppointment,
+    this.onCancelOrCompleteAppointment,
   });
 
   @override
@@ -82,16 +82,22 @@ class ProfileScreen extends StatelessWidget {
                               title: Text(
                                 "${appointment["date"]} | ${appointment["start_time"]} - ${appointment["end_time"]}",
                               ),
-                              subtitle: Text(
-                                "Status: ${appointment["status"]}",
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text("Patient: ${appointment["patient_name"]}"),
+                                  Text(
+                                    "Status: ${appointment["status"]}",
+                                  ),
+                                ],
                               ),
                               trailing: appointment["status"] == "booked" &&
-                                      onCancelAppointment != null
+                                      onCancelOrCompleteAppointment != null
                                   ? TextButton(
-                                      onPressed: () => onCancelAppointment!(
+                                      onPressed: () => onCancelOrCompleteAppointment?.call(
                                         appointment["appointment_id"],
                                       ),
-                                      child: const Text("Cancel"),
+                                      child: Text(title.contains("Doctor")? "Complete":"Cancel"),
                                     )
                                   : null,
                             ),
