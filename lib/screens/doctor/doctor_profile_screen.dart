@@ -27,11 +27,13 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
   Future<void> fetchProfileData() async {
     final api = ApiService();
     final userResponse = await api.getRequest("/users/me");
-    
+    final appointmentResponse = await api.getRequest("/appointments/doctor");
 
-    if (userResponse.statusCode == 200) {
+    if (userResponse.statusCode == 200 &&
+        appointmentResponse.statusCode == 200) {
       setState(() {
         user = jsonDecode(userResponse.body);
+        appointments = jsonDecode(appointmentResponse.body);
         isLoading = false;
       });
     } else if (userResponse.statusCode == 401) {
@@ -56,6 +58,38 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
       });
     }
   }
+
+  Future<void> completeAppointment(int appointmentId) async {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text("Complete Appointment?"),
+      content: const Text("Mark this appointment as completed?"),
+      actions: [
+        TextButton(
+          onPressed: () async {
+            final response = await ApiService().patchRequest(
+              "/appointments/$appointmentId/complete",
+              {},
+            );
+            Navigator.pop(context);
+            if (response.statusCode == 200) {
+              fetchProfileData();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Appointment completed")),
+              );
+            }
+          },
+          child: const Text("Yes"),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("No"),
+        ),
+      ],
+    ),
+  );
+}
 
   Future<void> logout() async {
     showDialog(
@@ -90,6 +124,7 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
       isLoading: isLoading,
       onLogout: logout,
       title: "Doctor Profile",
+      onCancelOrCompleteAppointment: completeAppointment,
     );
   }
 }
