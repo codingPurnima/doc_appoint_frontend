@@ -1,16 +1,70 @@
-# doc_appoint_frontend
+# DocAppoint - Frontend
 
-A new Flutter project.
+A full-stack Doctor Appointment Booking System built using Flutter and FastAPI that allows patients to book time slots with doctors and enables doctors to manage and complete appointments.
 
-## Getting Started
+## Tech Stack
+- Flutter
+- Dart
+- Rest API
+- JWT Authentication
+  
+## Features
+Patient:
+- Register and Login
+- View available slots
+- Book an appointment
+- Cancel an appointment
+- View appointment history
 
-This project is a starting point for a Flutter application.
+Doctor:
+- Login
+- Generate appointment slots
+- View all slots
+- Freeze/unfreeze slots
+- See patient details
+- Mark appointment as completed
 
-A few resources to get you started if this is your first Flutter project:
+## Screens
+- Register
+- Login
+- Patient Home 
+- Doctor Dashboard
+- Profile & Appoinments
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Installation
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Clone repository:
+git clone https://github.com/codingPurnima/doc_appoint_frontend.git
+
+Install dependencies:
+flutter pub get
+
+Run the app:
+flutter run
+
+Make sure the backend server is running before starting the app
+
+## Backend Repository
+Backend API is available here:
+
+https://github.com/codingPurnima/doc_appoint_backend.git
+
+## Screenshots
+
+### Register
+![Register] (images/1reg.png)
+
+### Login
+![Login] (images/2login.png)
+
+### Patient Home
+![Patient Home] (images/3pat_home.png)
+
+### Patient Profile
+![Patient Profile] (images/4pat_profile.png)
+
+### Doctor Home
+![Doctor Home] (images/5doc_home.png)
+
+### Doctor Profile
+![Doctor Profile] (images/6doc_profile.png)
