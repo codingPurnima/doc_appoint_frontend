@@ -175,12 +175,30 @@ class ApiService {
   }
 
   Future<void> toggleFreezeSlot(int slotId) async {
+    final response = await patchRequest("/slots/$slotId/freeze", {});
+    if (response.statusCode != 200) {
+      throw Exception("Failed to toggle slot freeze");
+    }
+  }
+
+  Future<List<dynamic>> getDoctorAppointments() async {
+    final response = await getRequest("/appointments/doctor");
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception("Failed to load appointments");
+    }
+  }
+
+  Future<void> completeAppointment(int appointmentId) async {
     final response = await patchRequest(
-      "/slots/$slotId/freeze",
+      "/appointments/$appointmentId/complete",
       {},
     );
-      if (response.statusCode != 200) {
-      throw Exception("Failed to toggle slot freeze");
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed to complete appointment");
     }
   }
 }
