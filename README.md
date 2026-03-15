@@ -52,19 +52,19 @@ https://github.com/codingPurnima/doc_appoint_backend.git
 ## Screenshots
 
 ### Register
-![Register] (images/1reg.png)
+![Register](images/1reg.png)
 
 ### Login
-![Login] (images/2login.png)
+![Login](images/2login.png)
 
 ### Patient Home
-![Patient Home] (images/3pat_home.png)
+![Patient Home](images/3pat_home.png)
 
 ### Patient Profile
-![Patient Profile] (images/4pat_profile.png)
+![Patient Profile](images/4pat_profile.png)
 
 ### Doctor Home
-![Doctor Home] (images/5doc_home.png)
+![Doctor Home](images/5doc_home.png)
 
 ### Doctor Profile
-![Doctor Profile] (images/6doc_profile.png)
+![Doctor Profile](images/6doc_profile.png)
