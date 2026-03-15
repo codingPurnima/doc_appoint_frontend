@@ -43,6 +43,15 @@ class _GenerateSlotsDialogState extends State<GenerateSlotsDialog> {
         );
       }
     }
+    else{
+      if(mounted){
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Error generating slots. Check your slot fields.")),
+        );
+      }
+      
+    }
   }
 
   @override
