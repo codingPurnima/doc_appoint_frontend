@@ -29,10 +29,16 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      setState(() {
-        slots = data.map<Slot>((json) => Slot.fromJson(json)).toList();
-        isLoading = false;
-      });
+      if (data is List) {
+        setState(() {
+          slots = data.map((json) => Slot.fromJson(json)).toList();
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+      }
     } else {
       setState(() {
         isLoading = false;

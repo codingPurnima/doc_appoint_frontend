@@ -28,7 +28,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
 
     if (result != null) {
       setState(() {
-        slots = result.map<Slot>((json) => Slot.fromJson(json)).toList();
+        slots = result.map((json) => Slot.fromJson(json)).toList();
         isLoading = false;
       });
     } else {
@@ -39,9 +39,11 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   }
 
   void _bookSlot(Slot slot) {
+    final pageContext = context;
+
     showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
+      context: pageContext,
+      builder: (dialogContext) => AlertDialog(
         title: Row(
           children: const [
             Icon(Icons.event_available, color: Color(0xFF061827)),
@@ -59,13 +61,15 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               final success = await ApiService().bookAppointment(slot.id);
+
+              if (!mounted) return;
+
               if (success) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     backgroundColor: Color.fromARGB(255, 15, 50, 79),
-                    // behavior: SnackBarBehavior.floating,
                     content: Text(
                       "Booking Successful. Try to reach 10 mins earlier than your time",
                     ),
@@ -132,7 +136,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             ),
             if (isLoading)
               const Center(child: CircularProgressIndicator())
-            else if (slots.isEmpty)
+            else if (availableSlots.isEmpty)
               const Center(child: Text("No slots available today"))
             else
               Expanded(

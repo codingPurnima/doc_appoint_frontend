@@ -1,4 +1,4 @@
-import 'package:doc_appoint_frontend/screens/welcome_screen.dart';
+import 'package:doc_appoint_frontend/screens/common/splash_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -11,7 +11,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: WelcomeScreen(),
+      home: SplashScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
