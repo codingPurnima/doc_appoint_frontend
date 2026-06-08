@@ -64,12 +64,15 @@ class _SplashScreenState extends State<SplashScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Center(
-            child: Text(
-              "DocAppoint",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 70,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                " DocAppoint ",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 70,
+                ),
               ),
             ),
           ),
