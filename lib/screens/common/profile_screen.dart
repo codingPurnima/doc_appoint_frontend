@@ -81,6 +81,11 @@ class ProfileScreen extends StatelessWidget {
                           final appointment = appointments[index];
 
                           return Card(
+                            color: (appointment["status"] == "completed")
+                          ? const Color(0xFF4CAF7A)
+                          : (appointment["status"] == "cancelled")
+                          ? const Color(0xFFE57373)
+                          : const Color(0xFF5C9ED8),
                             child: ListTile(
                               title: Text(
                                 "${appointment["date"]} | ${appointment["start_time"]} - ${appointment["end_time"]}",
