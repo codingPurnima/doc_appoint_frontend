@@ -144,9 +144,12 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        subtitle: Text(
-                          "Status: $status",
-                          style: TextStyle(fontSize: 15, color: Colors.white),
+                        subtitle: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            "Status: $status",
+                            style: TextStyle(fontSize: 15, color: Colors.white),
+                          ),
                         ),
                         onTap: () async {
                           if (slot.status == 'booked') {
