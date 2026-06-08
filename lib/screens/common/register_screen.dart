@@ -39,9 +39,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Registration Successful. Please Login")),
+          const SnackBar(
+            content: Text("Registration Successful. Please Login"),
+          ),
         );
-        
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -58,12 +60,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          "Create account",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 45,
-            fontWeight: FontWeight.bold,
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            "Create account",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 45,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         centerTitle: true,
@@ -76,16 +81,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: Column(
             children: [
               SizedBox(height: 30),
-              Container(
-                // could use CircleAvatar better
-                height: 150,
-                width: 150,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(100),
+              CircleAvatar(
+                radius: 75,
+                backgroundColor: Colors.grey[300],
+                backgroundImage: AssetImage(
+                  'assets/images/DocAppointLogo.jpeg',
                 ),
-                alignment: Alignment.center,
-                child: const Text("Add Logo", style: TextStyle(fontSize: 18)),
               ),
               SizedBox(height: 30),
               Form(
@@ -105,6 +106,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         }
                         if (value.length < 3) {
                           return "Name must be at least 3 characters";
+                        }
+                        if (value.contains("[^a-zA-z]")) {
+                          return "Name must contain only letters";
                         }
                         return null;
                       },
@@ -205,8 +209,3 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 }
-
-
-
-
-// const Color.fromARGB(255, 6, 24, 39)

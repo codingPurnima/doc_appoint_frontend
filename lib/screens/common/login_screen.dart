@@ -41,23 +41,23 @@ class _LoginScreenState extends State<LoginScreen> {
         final accessToken = result["access_token"];
         final role = result["role"];
 
-        if(accessToken != null){
-            if(role=="patient"){
-              Navigator.pushAndRemoveUntil(
+        if (accessToken != null) {
+          if (role == "patient") {
+            Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(builder: (context) => PatientMainScreen()),
               (route) =>
                   false, // prevents going back to register again after success because it is still there in the stack as we followed this route: register-push-> login.
-              );
-            }else if(role=="doctor"){
-              Navigator.pushAndRemoveUntil(
+            );
+          } else if (role == "doctor") {
+            Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(builder: (context) => DoctorMainScreen()),
               (route) =>
                   false, // prevents going back to register again after success because it is still there in the stack as we followed this route: register-push-> login.
-              );
+            );
           }
-        }       
+        }
       } else {
         ScaffoldMessenger.of(
           context,
@@ -91,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
             CircleAvatar(
               radius: 75,
               backgroundColor: Colors.grey[300],
-              child: Text("Logo"),
+              backgroundImage: AssetImage('assets/images/DocAppointLogo.jpeg'),
             ),
             SizedBox(height: 30),
             Form(
@@ -111,6 +111,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       }
                       if (value.length < 3) {
                         return "Name must be at least 3 characters";
+                      }
+                      if (value.contains("[^a-zA-Z]")) {
+                        return "Name must contain only letters";
                       }
                       return null;
                     },
@@ -194,7 +197,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-
-
-
-
