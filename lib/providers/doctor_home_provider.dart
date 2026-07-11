@@ -27,3 +27,49 @@ class DoctorHomeState {
     );
   }
 }
+
+class DoctorHomeNotifier extends Notifier<DoctorHomeState> {
+  final ApiService api = ApiService();
+
+
+// the initial state of the notifier
+  @override
+  DoctorHomeState build() {
+    return const DoctorHomeState(slots: [], isLoading: true, error: null);
+  }
+
+  Future<void> fetchSlots() async {
+    try {
+      final today = DateTime.now().toIso8601String().split("T")[0];
+      final response = await api.getRequest("/slots?date=$today");
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is List) {
+          state = state.copyWith(
+            slots: data.map((json) => Slot.fromJson(json)).toList(),
+            isLoading: false,
+            error: null,
+          );
+        } else {
+          state = state.copyWith(
+            isLoading: false,
+            error: "Unexpected response",
+          );
+        }
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          error: "Failed to fetch slots",
+        );
+      }
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+}
+
+final doctorHomeProvider =
+    NotifierProvider<DoctorHomeNotifier, DoctorHomeState>(
+      DoctorHomeNotifier.new,
+    );
