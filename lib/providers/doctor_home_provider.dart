@@ -31,8 +31,7 @@ class DoctorHomeState {
 class DoctorHomeNotifier extends Notifier<DoctorHomeState> {
   final ApiService api = ApiService();
 
-
-// the initial state of the notifier
+  // the initial state of the notifier
   @override
   DoctorHomeState build() {
     return const DoctorHomeState(slots: [], isLoading: true, error: null);
@@ -66,6 +65,11 @@ class DoctorHomeNotifier extends Notifier<DoctorHomeState> {
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
+  }
+
+  Future<void> toggleFreezeSlot(int id) async {
+    await api.toggleFreezeSlot(id);
+    await fetchSlots();
   }
 }
 

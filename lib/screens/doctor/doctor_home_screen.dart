@@ -1,49 +1,26 @@
 import 'dart:convert';
 
 import 'package:doc_appoint_frontend/models/slot.dart';
+import 'package:doc_appoint_frontend/providers/doctor_home_provider.dart';
 import 'package:doc_appoint_frontend/services/api_service.dart';
 import 'package:doc_appoint_frontend/widgets/slot_generation_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class DoctorHomeScreen extends StatefulWidget {
+class DoctorHomeScreen extends ConsumerStatefulWidget {
   const DoctorHomeScreen({super.key});
 
   @override
-  State<DoctorHomeScreen> createState() => _DoctorHomeScreenState();
+  ConsumerState<DoctorHomeScreen> createState() => _DoctorHomeScreenState();
 }
 
-class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
-  List<Slot> slots = [];
-  bool isLoading = true;
-  final api = ApiService();
-
+class _DoctorHomeScreenState extends ConsumerState<DoctorHomeScreen> {
   @override
   void initState() {
     super.initState();
-    fetchSlots();
-  }
-
-  Future<void> fetchSlots() async {
-    final today = DateTime.now().toIso8601String().split("T")[0];
-    final response = await api.getRequest("/slots?date=$today");
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data is List) {
-        setState(() {
-          slots = data.map((json) => Slot.fromJson(json)).toList();
-          isLoading = false;
-        });
-      } else {
-        setState(() {
-          isLoading = false;
-        });
-      }
-    } else {
-      setState(() {
-        isLoading = false;
-      });
-    }
+    Future.microtask(() {
+      ref.read(doctorHomeProvider.notifier).fetchSlots();
+    });
   }
 
   Widget buildLegend() {
@@ -73,6 +50,9 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(doctorHomeProvider);
+    final notifier = ref.read(doctorHomeProvider.notifier);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -106,9 +86,9 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
               ),
             ),
 
-            if (isLoading)
+            if (state.isLoading)
               const Center(child: CircularProgressIndicator())
-            else if (slots.isEmpty)
+            else if (state.slots.isEmpty)
               const Center(child: Text("No slots generated yet"))
             else
               Expanded(
@@ -119,10 +99,10 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
                     mainAxisSpacing: 10,
                     childAspectRatio: 1.5,
                   ),
-                  itemCount: slots.length,
+                  itemCount: state.slots.length,
                   itemBuilder: (context, index) {
-                    final slot = slots[index];
-                    final status = slots[index].status;
+                    final slot = state.slots[index];
+                    final status = state.slots[index].status;
                     return Container(
                       margin: const EdgeInsets.symmetric(
                         vertical: 4,
@@ -161,11 +141,10 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
                           } else if (slot.status == "available" ||
                               slot.status == "frozen") {
                             try {
-                              await api.toggleFreezeSlot(slot.id);
+                              await notifier.toggleFreezeSlot(slot.id);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text("Slot updated")),
                               );
-                              fetchSlots();
                             } catch (e) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text("Error updating slot")),
@@ -185,8 +164,11 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
         onPressed: () {
           showDialog(
             context: context,
-            builder: (context) =>
-                GenerateSlotsDialog(onSlotsGenerated: fetchSlots),
+            builder: (context) => GenerateSlotsDialog(
+              onSlotsGenerated: () async {
+                await notifier.fetchSlots();
+              },
+            ),
           );
         },
         tooltip: "Create slots",
