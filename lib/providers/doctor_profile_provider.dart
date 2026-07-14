@@ -59,6 +59,8 @@ class DoctorProfileNotifier extends Notifier<DoctorProfileState> {
           appointments: jsonDecode(appointmentResponse.body),
           isLoading: false,
         );
+      } else if (userResponse.statusCode == 401) {
+        state = state.copyWith(isLoading: false, error: "session_expired");
       } else {
         state = state.copyWith(isLoading: false);
       }
