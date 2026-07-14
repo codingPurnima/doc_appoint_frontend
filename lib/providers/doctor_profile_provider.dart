@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:doc_appoint_frontend/services/api_service.dart';
+import 'package:doc_appoint_frontend/services/auth_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class DoctorProfileState {
@@ -66,7 +67,17 @@ class DoctorProfileNotifier extends Notifier<DoctorProfileState> {
     }
   }
 
-  
+  Future<int> completeAppointment(int id) async {
+    final response = await api.patchRequest("/appointments/$id/complete", {});
+    if (response.statusCode == 200) {
+      await fetchProfileData();
+    }
+    return response.statusCode;
+  }
+
+  Future<void> logout() async {
+    await AuthService().logout();
+  }
 }
 
 final doctorProfileProvider =
