@@ -19,8 +19,8 @@ class DoctorProfileState {
 
   DoctorProfileState copyWith({
     Map<String, dynamic>? user,
-    List<dynamic>? appointments = const [],
-    bool? isLoading = true,
+    List<dynamic>? appointments,
+    bool? isLoading,
     String? error,
   }) {
     return DoctorProfileState(
