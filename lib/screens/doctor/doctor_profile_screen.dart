@@ -4,8 +4,25 @@ import 'package:doc_appoint_frontend/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class DoctorProfileScreen extends ConsumerWidget {
+class DoctorProfileScreen extends ConsumerStatefulWidget {
   const DoctorProfileScreen({super.key});
+
+  @override
+  ConsumerState<DoctorProfileScreen> createState() =>
+      _DoctorProfileScreenState();
+}
+
+class _DoctorProfileScreenState
+    extends ConsumerState<DoctorProfileScreen> {
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() {
+      ref.read(doctorProfileProvider.notifier).fetchProfileData();
+    });
+  }
 
   Future<void> completeAppointment(
     BuildContext context,
@@ -17,12 +34,17 @@ class DoctorProfileScreen extends ConsumerWidget {
       builder: (dialogContext) => AlertDialog(
         title: const Row(
           children: [
-            Icon(Icons.check_circle_outline, color: AppColors.completedDot),
+            Icon(
+              Icons.check_circle_outline,
+              color: AppColors.completedDot,
+            ),
             SizedBox(width: 8),
             Text("Complete Appointment"),
           ],
         ),
-        content: const Text("Mark this consultation as completed?"),
+        content: const Text(
+          "Mark this consultation as completed?",
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
@@ -35,13 +57,18 @@ class DoctorProfileScreen extends ConsumerWidget {
             ),
             onPressed: () async {
               Navigator.pop(dialogContext);
+
               final status = await ref
                   .read(doctorProfileProvider.notifier)
                   .completeAppointment(appointmentId);
+
               if (!context.mounted) return;
+
               if (status == 200) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Appointment completed")),
+                  const SnackBar(
+                    content: Text("Appointment completed"),
+                  ),
                 );
               }
             },
@@ -52,18 +79,26 @@ class DoctorProfileScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> logout(BuildContext context, WidgetRef ref) async {
+  Future<void> logout(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Row(
           children: [
-            Icon(Icons.logout_rounded, color: AppColors.bookedDot),
+            Icon(
+              Icons.logout_rounded,
+              color: AppColors.bookedDot,
+            ),
             SizedBox(width: 8),
             Text("Logout"),
           ],
         ),
-        content: const Text("Are you sure you want to log out of your account?"),
+        content: const Text(
+          "Are you sure you want to log out of your account?",
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
@@ -75,10 +110,19 @@ class DoctorProfileScreen extends ConsumerWidget {
               minimumSize: const Size(90, 38),
             ),
             onPressed: () async {
-              await ref.read(doctorProfileProvider.notifier).logout();
+              await ref
+                  .read(doctorProfileProvider.notifier)
+                  .logout();
+
               if (!context.mounted) return;
+
               Navigator.pop(dialogContext);
-              Navigator.pushNamedAndRemoveUntil(context, "/", (route) => false);
+
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                "/",
+                (route) => false,
+              );
             },
             child: const Text("Logout"),
           ),
@@ -88,18 +132,23 @@ class DoctorProfileScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final state = ref.watch(doctorProfileProvider);
+
     ref.listen(doctorProfileProvider, (previous, next) async {
       if (next.error == "session_expired") {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              "Oops! Seems like your session expired. Please login again.",
+              "Oops! Seems like your session expired. "
+              "Please login again.",
             ),
           ),
         );
-        await ref.read(doctorProfileProvider.notifier).logout();
+
+        await ref
+            .read(doctorProfileProvider.notifier)
+            .logout();
 
         if (!context.mounted) return;
 
@@ -117,7 +166,8 @@ class DoctorProfileScreen extends ConsumerWidget {
       isLoading: state.isLoading,
       onLogout: () => logout(context, ref),
       title: "Doctor Profile",
-      onCancelOrCompleteAppointment: (id) => completeAppointment(context, ref, id),
+      onCancelOrCompleteAppointment: (id) =>
+          completeAppointment(context, ref, id),
     );
   }
 }

@@ -37,7 +37,6 @@ class DoctorProfileNotifier extends Notifier<DoctorProfileState> {
 
   @override
   DoctorProfileState build() {
-    fetchProfileData();
     return const DoctorProfileState(
       user: null,
       appointments: [],
