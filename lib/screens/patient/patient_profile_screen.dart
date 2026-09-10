@@ -1,9 +1,9 @@
 import 'dart:convert';
-
 import 'package:doc_appoint_frontend/screens/common/login_screen.dart';
 import 'package:doc_appoint_frontend/screens/common/profile_screen.dart';
 import 'package:doc_appoint_frontend/services/api_service.dart';
 import 'package:doc_appoint_frontend/services/auth_service.dart';
+import 'package:doc_appoint_frontend/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class PatientProfileScreen extends StatefulWidget {
@@ -29,6 +29,8 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     final userResponse = await api.getRequest("/users/me");
     final appointmentResponse = await api.getRequest("/appointments/me");
 
+    if (!mounted) return;
+
     if (userResponse.statusCode == 200 &&
         appointmentResponse.statusCode == 200) {
       setState(() {
@@ -38,7 +40,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
       });
     } else if (userResponse.statusCode == 401) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
             "Oops! Seems like your session expired. Please login again",
           ),
@@ -48,7 +50,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => LoginScreen()),
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
         (route) => false,
       );
       return;
@@ -62,18 +64,33 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   Future<void> cancelAppointment(int appointmentId) async {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Cancel?"),
-        content: Text("Are you sure you want to cancel this appointment?"),
+      builder: (dialogContext) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.event_busy, color: AppColors.bookedDot),
+            SizedBox(width: 8),
+            Text("Cancel Appointment"),
+          ],
+        ),
+        content: const Text("Are you sure you want to cancel this appointment?"),
         actions: [
           TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text("Keep"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.bookedDot,
+              minimumSize: const Size(90, 38),
+            ),
             onPressed: () async {
+              Navigator.pop(dialogContext);
               final response = await ApiService().putRequest(
                 "/appointments/$appointmentId/cancel",
                 {},
               );
-              Navigator.pop(context);
-              // Navigator.pushNamedAndRemoveUntil(context, "/", (route) => false);
+
+              if (!mounted) return;
 
               if (response.statusCode == 200) {
                 fetchProfileData();
@@ -82,11 +99,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                 );
               }
             },
-            child: Text("Yes"),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("No"),
+            child: const Text("Yes, Cancel"),
           ),
         ],
       ),
@@ -96,22 +109,32 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   Future<void> logout() async {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Logout?"),
-        content: Text("Are you sure you want to logout?"),
+      builder: (dialogContext) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.logout_rounded, color: AppColors.bookedDot),
+            SizedBox(width: 8),
+            Text("Logout"),
+          ],
+        ),
+        content: const Text("Are you sure you want to log out of your account?"),
         actions: [
           TextButton(
-            onPressed: () async {
-              await AuthService().logout();
-              if (!context.mounted) return;
-              Navigator.pop(context);
-              Navigator.pushNamedAndRemoveUntil(context, "/", (route) => false);
-            },
-            child: Text("Yes"),
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text("Cancel"),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("No"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.bookedDot,
+              minimumSize: const Size(90, 38),
+            ),
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await AuthService().logout();
+              if (!mounted) return;
+              Navigator.pushNamedAndRemoveUntil(context, "/", (route) => false);
+            },
+            child: const Text("Logout"),
           ),
         ],
       ),
@@ -121,7 +144,23 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(title: const Text("Patient Profile")),
+        body: const Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 12),
+              Text(
+                "Loading profile...",
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+      );
     }
     return ProfileScreen(
       user: user,

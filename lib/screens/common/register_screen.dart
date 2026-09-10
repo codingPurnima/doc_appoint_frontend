@@ -1,5 +1,6 @@
 import 'package:doc_appoint_frontend/screens/common/login_screen.dart';
 import 'package:doc_appoint_frontend/services/auth_service.dart';
+import 'package:doc_appoint_frontend/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 
@@ -17,6 +18,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _mobileController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  bool _obscurePassword = true;
+  bool _isLoading = false;
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -26,79 +30,111 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      final authService = AuthService();
+    if (!_formKey.currentState!.validate()) return;
 
-      final success = await authService.register(
-        _nameController.text.trim(),
-        _mobileController.text.trim(),
-        _passwordController.text.trim(),
+    setState(() => _isLoading = true);
+
+    final authService = AuthService();
+    final success = await authService.register(
+      _nameController.text.trim(),
+      _mobileController.text.trim(),
+      _passwordController.text.trim(),
+    );
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Registration Successful. Please Login"),
+        ),
       );
 
-      if (!mounted) return;
-
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Registration Successful. Please Login"),
-          ),
-        );
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-        );
-      } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("User exists already")));
-      }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("User exists already")),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            "Create account",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 45,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: const Color.fromARGB(255, 6, 24, 39),
-        toolbarHeight: 100,
+        title: const Text("Create Account"),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              SizedBox(height: 30),
-              CircleAvatar(
-                radius: 75,
-                backgroundColor: Colors.grey[300],
-                backgroundImage: AssetImage(
-                  'assets/images/DocAppointLogo.jpeg',
+              const SizedBox(height: 16),
+              Center(
+                child: Container(
+                  width: 90,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.cardBorder, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Image.asset(
+                    'assets/images/DocAppointLogo.jpeg',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => const Icon(
+                      Icons.local_hospital_rounded,
+                      size: 44,
+                      color: AppColors.primary,
+                    ),
+                  ),
                 ),
               ),
-              SizedBox(height: 30),
+              const SizedBox(height: 20),
+              const Text(
+                "Get Started",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                "Create an account to book your appointments",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 32),
               Form(
                 key: _formKey,
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     TextFormField(
                       controller: _nameController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: "Full Name",
-                        hintText: "First Middle Last",
+                        hintText: "Enter your full name",
+                        prefixIcon: Icon(Icons.person_outline, size: 22),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -113,14 +149,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 15),
-
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _mobileController,
                       keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: "Phone Number",
-                        hintText: "1234567890",
+                        hintText: "Enter 10-digit phone number",
+                        prefixIcon: Icon(Icons.phone_outlined, size: 22),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -132,14 +168,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 15),
-
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _passwordController,
-                      obscureText: true,
+                      obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: "Password",
-                        hintText: "asCjiV34%#",
+                        hintText: "At least 8 characters",
+                        prefixIcon: const Icon(Icons.lock_outline, size: 22),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            size: 20,
+                            color: AppColors.textMuted,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -151,61 +201,59 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         return null;
                       },
                     ),
-
-                    const SizedBox(height: 30),
-
+                    const SizedBox(height: 28),
                     ElevatedButton(
-                      onPressed: _submitForm,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 6, 24, 39),
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(
-                          vertical: 10,
-                          horizontal: 5,
-                        ),
-                        fixedSize: Size(125, 15),
-                        elevation: 5,
-                      ),
-                      child: const Text(
-                        "Register",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
-                        ),
-                      ),
+                      onPressed: _isLoading ? null : _submitForm,
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Text("Register"),
                     ),
                   ],
                 ),
               ),
-              SizedBox(height: 10),
-              RichText(
-                text: TextSpan(
-                  text: "Already have an account? ",
-                  style: TextStyle(color: Colors.black, fontSize: 15),
-                  children: [
-                    TextSpan(
-                      text: 'Login now',
-                      style: TextStyle(color: Colors.blueAccent, fontSize: 20),
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () {
-                          // Navigate to Login Screen
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => LoginScreen(),
-                            ),
-                          );
-                        },
+              const SizedBox(height: 24),
+              Center(
+                child: RichText(
+                  text: TextSpan(
+                    text: "Already have an account? ",
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
                     ),
-                  ],
+                    children: [
+                      TextSpan(
+                        text: 'Login now',
+                        style: const TextStyle(
+                          color: AppColors.accent,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LoginScreen(),
+                              ),
+                            );
+                          },
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
         ),
       ),
-      backgroundColor: const Color(0xFFDCE6F1),
     );
   }
 }

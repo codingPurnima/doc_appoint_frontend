@@ -1,6 +1,6 @@
-
 import 'package:doc_appoint_frontend/providers/doctor_profile_provider.dart';
 import 'package:doc_appoint_frontend/screens/common/profile_screen.dart';
+import 'package:doc_appoint_frontend/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -14,13 +14,27 @@ class DoctorProfileScreen extends ConsumerWidget {
   ) async {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Complete Appointment?"),
-        content: const Text("Mark this appointment as completed?"),
+      builder: (dialogContext) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle_outline, color: AppColors.completedDot),
+            SizedBox(width: 8),
+            Text("Complete Appointment"),
+          ],
+        ),
+        content: const Text("Mark this consultation as completed?"),
         actions: [
           TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.completedDot,
+              minimumSize: const Size(90, 38),
+            ),
             onPressed: () async {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               final status = await ref
                   .read(doctorProfileProvider.notifier)
                   .completeAppointment(appointmentId);
@@ -31,11 +45,7 @@ class DoctorProfileScreen extends ConsumerWidget {
                 );
               }
             },
-            child: const Text("Yes"),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("No"),
+            child: const Text("Complete"),
           ),
         ],
       ),
@@ -45,22 +55,32 @@ class DoctorProfileScreen extends ConsumerWidget {
   Future<void> logout(BuildContext context, WidgetRef ref) async {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Logout?"),
-        content: Text("Are you sure you want to logout?"),
+      builder: (dialogContext) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.logout_rounded, color: AppColors.bookedDot),
+            SizedBox(width: 8),
+            Text("Logout"),
+          ],
+        ),
+        content: const Text("Are you sure you want to log out of your account?"),
         actions: [
           TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.bookedDot,
+              minimumSize: const Size(90, 38),
+            ),
             onPressed: () async {
               await ref.read(doctorProfileProvider.notifier).logout();
               if (!context.mounted) return;
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               Navigator.pushNamedAndRemoveUntil(context, "/", (route) => false);
             },
-            child: Text("Yes"),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("No"),
+            child: const Text("Logout"),
           ),
         ],
       ),
@@ -90,13 +110,14 @@ class DoctorProfileScreen extends ConsumerWidget {
         );
       }
     });
+
     return ProfileScreen(
       user: state.user,
       appointments: state.appointments,
       isLoading: state.isLoading,
-      onLogout: ()=> logout(context, ref),
+      onLogout: () => logout(context, ref),
       title: "Doctor Profile",
-      onCancelOrCompleteAppointment: (id)=> completeAppointment(context, ref, id),
+      onCancelOrCompleteAppointment: (id) => completeAppointment(context, ref, id),
     );
   }
 }

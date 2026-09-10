@@ -1,9 +1,8 @@
-import 'dart:convert';
-
-import 'package:doc_appoint_frontend/models/slot.dart';
 import 'package:doc_appoint_frontend/providers/doctor_home_provider.dart';
-import 'package:doc_appoint_frontend/services/api_service.dart';
+import 'package:doc_appoint_frontend/theme/app_theme.dart';
+import 'package:doc_appoint_frontend/widgets/empty_state_view.dart';
 import 'package:doc_appoint_frontend/widgets/slot_generation_dialog.dart';
+import 'package:doc_appoint_frontend/widgets/status_badge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -24,27 +23,28 @@ class _DoctorHomeScreenState extends ConsumerState<DoctorHomeScreen> {
   }
 
   Widget buildLegend() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          legendItem("Available", const Color(0xFF4CAF7A)),
-          legendItem("Booked", const Color(0xFFE57373)),
-          legendItem("Frozen", const Color(0xFFB0BEC5)),
-          legendItem("Completed", const Color(0xFF5C9ED8)),
-        ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(color: AppColors.cardBorder, width: 1),
+        ),
       ),
-    );
-  }
-
-  Widget legendItem(String label, Color color) {
-    return Row(
-      children: [
-        Container(width: 15, height: 15, color: color),
-        const SizedBox(width: 5),
-        Text(label),
-      ],
+      child: const SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            StatusBadge(status: "available"),
+            SizedBox(width: 8),
+            StatusBadge(status: "booked"),
+            SizedBox(width: 8),
+            StatusBadge(status: "frozen"),
+            SizedBox(width: 8),
+            StatusBadge(status: "completed"),
+          ],
+        ),
+      ),
     );
   }
 
@@ -54,111 +54,229 @@ class _DoctorHomeScreenState extends ConsumerState<DoctorHomeScreen> {
     final notifier = ref.read(doctorHomeProvider.notifier);
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
-          "Welcome!",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 45,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: const Color.fromARGB(255, 6, 24, 39),
-        toolbarHeight: 100,
+        title: const Text("Welcome!"),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(5.0),
-        child: Column(
-          children: [
-            buildLegend(),
-            Container(
-              height: 50,
-              alignment: Alignment.center,
-              color: Color(0xFFDCE6F1),
-              child: Text(
-                "Check out your Slots",
-                style: TextStyle(
-                  color: const Color.fromARGB(255, 6, 24, 39),
-                  fontSize: 35,
-                  fontWeight: FontWeight.w600,
-                ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          buildLegend(),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                bottom: BorderSide(color: AppColors.cardBorder, width: 1),
               ),
             ),
-
-            if (state.isLoading)
-              const Center(child: CircularProgressIndicator())
-            else if (state.slots.isEmpty)
-              const Center(child: Text("No slots generated yet"))
-            else
-              Expanded(
-                child: GridView.builder(
-                  gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 250,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: 1.5,
-                  ),
-                  itemCount: state.slots.length,
-                  itemBuilder: (context, index) {
-                    final slot = state.slots[index];
-                    final status = state.slots[index].status;
-                    return Container(
-                      margin: const EdgeInsets.symmetric(
-                        vertical: 4,
-                        horizontal: 5,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Your Schedule",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -0.3,
                       ),
-                      color: (status == "available")
-                          ? const Color(0xFF4CAF7A)
-                          : (status == "booked")
-                          ? const Color(0xFFE57373)
-                          : (status == "frozen")
-                          ? const Color(0xFFB0BEC5)
-                          : const Color(0xFF5C9ED8),
-                      child: ListTile(
-                        title: Text(
-                          "${slot.startTime} - ${slot.endTime}",
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      "Manage today's consultation slots",
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    "${state.slots.length} Total",
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: state.isLoading
+                ? const Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 12),
+                        Text(
+                          "Loading schedule...",
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
                         ),
-                        subtitle: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            "Status: $status",
-                            style: TextStyle(fontSize: 15, color: Colors.white),
-                          ),
+                      ],
+                    ),
+                  )
+                : state.slots.isEmpty
+                    ? const EmptyStateView(
+                        icon: Icons.calendar_today_outlined,
+                        title: "No slots generated yet",
+                        subtitle: "Tap the + button below to create consultation slots for today.",
+                      )
+                    : GridView.builder(
+                        padding: const EdgeInsets.all(14),
+                        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 220,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          childAspectRatio: 1.35,
                         ),
-                        onTap: () async {
-                          if (slot.status == 'booked') {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text("Can not freeze booked slot"),
-                              ),
-                            );
-                          } else if (slot.status == "available" ||
-                              slot.status == "frozen") {
-                            try {
-                              await notifier.toggleFreezeSlot(slot.id);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text("Slot updated")),
-                              );
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text("Error updating slot")),
-                              );
-                            }
+                        itemCount: state.slots.length,
+                        itemBuilder: (context, index) {
+                          final slot = state.slots[index];
+                          final status = slot.status.toLowerCase();
+
+                          Color borderColor;
+                          Color accentBg;
+                          if (status == "available") {
+                            borderColor = AppColors.availableBorder;
+                            accentBg = AppColors.availableBg;
+                          } else if (status == "booked") {
+                            borderColor = AppColors.bookedBorder;
+                            accentBg = AppColors.bookedBg;
+                          } else if (status == "frozen") {
+                            borderColor = AppColors.frozenBorder;
+                            accentBg = AppColors.frozenBg;
+                          } else {
+                            borderColor = AppColors.completedBorder;
+                            accentBg = AppColors.completedBg;
                           }
+
+                          return InkWell(
+                            onTap: () async {
+                              if (slot.status == 'booked') {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Cannot freeze a booked slot"),
+                                  ),
+                                );
+                              } else if (slot.status == "available" ||
+                                  slot.status == "frozen") {
+                                try {
+                                  await notifier.toggleFreezeSlot(slot.id);
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Slot updated")),
+                                  );
+                                } catch (e) {
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Error updating slot")),
+                                  );
+                                }
+                              }
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: borderColor, width: 1.2),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.02),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: accentBg,
+                                      borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(11),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        StatusBadge(status: slot.status),
+                                        if (status == "available" || status == "frozen")
+                                          Icon(
+                                            status == "frozen"
+                                                ? Icons.lock_outline
+                                                : Icons.lock_open_outlined,
+                                            size: 14,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 8,
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            "${slot.startTime} - ${slot.endTime}",
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            status == "available"
+                                                ? "Tap to freeze"
+                                                : status == "frozen"
+                                                    ? "Tap to unfreeze"
+                                                    : status == "booked"
+                                                        ? "Booked by patient"
+                                                        : "Completed",
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: AppColors.textMuted,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
                         },
                       ),
-                    );
-                  },
-                ),
-              ),
-          ],
-        ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -172,11 +290,11 @@ class _DoctorHomeScreenState extends ConsumerState<DoctorHomeScreen> {
           );
         },
         tooltip: "Create slots",
-        backgroundColor: Colors.white,
-        foregroundColor: const Color.fromARGB(255, 6, 24, 39),
-        child: Icon(Icons.add, size: 45),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        elevation: 3,
+        child: const Icon(Icons.add, size: 28),
       ),
-      backgroundColor: Color(0xFFDCE6F1),
     );
   }
 }

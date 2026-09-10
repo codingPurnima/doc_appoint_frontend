@@ -1,4 +1,7 @@
 import 'package:doc_appoint_frontend/services/api_service.dart';
+import 'package:doc_appoint_frontend/theme/app_theme.dart';
+import 'package:doc_appoint_frontend/widgets/empty_state_view.dart';
+import 'package:doc_appoint_frontend/widgets/status_badge.dart';
 import 'package:flutter/material.dart';
 import '../../models/slot.dart';
 
@@ -21,10 +24,11 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
 
   Future<void> fetchSlots() async {
     final apiService = ApiService();
-
     final today = DateTime.now().toIso8601String().split("T")[0];
 
     final result = await apiService.getAvailableSlots(today);
+
+    if (!mounted) return;
 
     if (result != null) {
       setState(() {
@@ -39,27 +43,57 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   }
 
   void _bookSlot(Slot slot) {
-    final pageContext = context;
-
     showDialog(
-      context: pageContext,
+      context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Row(
-          children: const [
-            Icon(Icons.event_available, color: Color(0xFF061827)),
-            SizedBox(width: 8),
+        title: const Row(
+          children: [
+            Icon(Icons.event_available, color: AppColors.primary),
+            SizedBox(width: 10),
             Text("Confirm Booking"),
           ],
         ),
-
-        content: Text("Book this slot?"),
-        backgroundColor: const Color(0xFFF7FAFC),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Would you like to book this appointment slot?",
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.cardBorder),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.schedule, size: 18, color: AppColors.accent),
+                  const SizedBox(width: 8),
+                  Text(
+                    "${slot.startTime} - ${slot.endTime}",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("Cancel"),
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text("Cancel"),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size(100, 42),
+            ),
             onPressed: () async {
               Navigator.pop(dialogContext);
               final success = await ApiService().bookAppointment(slot.id);
@@ -69,7 +103,6 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
               if (success) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    backgroundColor: Color.fromARGB(255, 15, 50, 79),
                     content: Text(
                       "Booking Successful. Try to reach 10 mins earlier than your time",
                     ),
@@ -77,112 +110,212 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                 );
                 fetchSlots();
               } else {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text("Booking Failed")));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Booking Failed")),
+                );
               }
             },
-            child: Text("Confirm"),
+            child: const Text("Confirm"),
           ),
         ],
       ),
     );
   }
 
-  // SOON
-  // void _buildDoctorDialog(BuildContext context) {
-
-  // }
-
   @override
   Widget build(BuildContext context) {
     final availableSlots = slots
         .where((slot) => slot.status == "available")
         .toList();
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "Welcome!",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 45,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: const Color.fromARGB(255, 6, 24, 39),
-        toolbarHeight: 100,
-      ),
 
-      body: Padding(
-        padding: const EdgeInsets.all(5),
-        child: Column(
-          children: [
-            Container(
-              height: 50,
-              alignment: Alignment.center,
-              color: Color(0xFFDCE6F1),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  " Check out Available Slots ",
-                  style: TextStyle(
-                    color: const Color.fromARGB(255, 6, 24, 39),
-                    fontSize: 35,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text("Welcome!"),
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 14),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                bottom: BorderSide(color: AppColors.cardBorder, width: 1),
               ),
             ),
-            if (isLoading)
-              const Center(child: CircularProgressIndicator())
-            else if (availableSlots.isEmpty)
-              const Center(child: Text("No slots available today"))
-            else
-              Expanded(
-                child: ListView.builder(
-                  itemCount: availableSlots.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    final slot = availableSlots[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                        vertical: 8,
-                        horizontal: 10,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Available Slots",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -0.3,
                       ),
-                      color: const Color(0xFF0E2A47),
-                      child: ListTile(
-                        title: Text(
-                          "${slot.startTime} - ${slot.endTime}",
-                          style: TextStyle(color: Colors.white, fontSize: 20),
-                        ),
-                        trailing: TextButton(
-                          onPressed: () => _bookSlot(slot),
-                          child: Text(
-                            "Tap to Book",
-                            style: TextStyle(color: Colors.white, fontSize: 15),
-                          ),
-                        ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "Today's Open Consultations",
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
-              ),
-          ],
-        ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.availableBg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.availableBorder),
+                  ),
+                  child: Text(
+                    "${availableSlots.length} Open",
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.availableText,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: isLoading
+                ? const Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 12),
+                        Text(
+                          "Loading available slots...",
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  )
+                : availableSlots.isEmpty
+                    ? const EmptyStateView(
+                        icon: Icons.event_busy_outlined,
+                        title: "No slots available today",
+                        subtitle: "Please check back later for newly released openings.",
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        itemCount: availableSlots.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          final slot = availableSlots[index];
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.cardBorder),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.02),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.accent.withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(
+                                    Icons.schedule_outlined,
+                                    color: AppColors.accent,
+                                    size: 22,
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "${slot.startTime} - ${slot.endTime}",
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      const StatusBadge(status: "available"),
+                                    ],
+                                  ),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () => _bookSlot(slot),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    foregroundColor: Colors.white,
+                                    minimumSize: const Size(88, 38),
+                                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    textStyle: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  child: const Text("Book"),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           showDialog(
             context: context,
-            builder: (context) =>
-                AlertDialog(title: Text("This is your doctor")),
+            builder: (context) => const AlertDialog(
+              title: Row(
+                children: [
+                  Icon(Icons.medical_information, color: AppColors.primary),
+                  SizedBox(width: 8),
+                  Text("Doctor Information"),
+                ],
+              ),
+              content: Text(
+                "You are viewing slots for your assigned doctor. Tap 'Book' on any available slot to confirm your appointment.",
+              ),
+            ),
           );
         },
-        backgroundColor: Color(0xFFDCE6F1),
-        foregroundColor: Color.fromARGB(255, 6, 24, 39),
-        child: Icon(Icons.medical_information),
+        backgroundColor: Colors.white,
+        foregroundColor: AppColors.primary,
+        elevation: 3,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: AppColors.cardBorder),
+        ),
+        tooltip: "Doctor Information",
+        child: const Icon(Icons.medical_information_outlined),
       ),
-      backgroundColor: Color(0xFFDCE6F1),
     );
   }
 }
