@@ -238,34 +238,40 @@ class _DoctorHomeScreenState extends ConsumerState<DoctorHomeScreen> {
                                         horizontal: 10,
                                         vertical: 8,
                                       ),
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            "${slot.startTime} - ${slot.endTime}",
-                                            textAlign: TextAlign.center,
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.textPrimary,
-                                            ),
+                                      child: SingleChildScrollView(
+                                        padding: EdgeInsets.zero,
+                                        physics: const BouncingScrollPhysics(),
+                                        child: Center(
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                                "${slot.startTime} - ${slot.endTime}",
+                                                textAlign: TextAlign.center,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppColors.textPrimary,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                status == "available"
+                                                    ? "Tap to freeze"
+                                                    : status == "frozen"
+                                                        ? "Tap to unfreeze"
+                                                        : status == "booked"
+                                                            ? "Booked by patient"
+                                                            : "Completed",
+                                                style: const TextStyle(
+                                                  fontSize: 11,
+                                                  color: AppColors.textMuted,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            status == "available"
-                                                ? "Tap to freeze"
-                                                : status == "frozen"
-                                                    ? "Tap to unfreeze"
-                                                    : status == "booked"
-                                                        ? "Booked by patient"
-                                                        : "Completed",
-                                            style: const TextStyle(
-                                              fontSize: 11,
-                                              color: AppColors.textMuted,
-                                            ),
-                                          ),
-                                        ],
+                                        ),
                                       ),
                                     ),
                                   ),
