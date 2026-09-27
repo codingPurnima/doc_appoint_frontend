@@ -46,10 +46,16 @@ class DoctorProfileNotifier extends Notifier<DoctorProfileState> {
   }
 
   Future<void> fetchProfileData() async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, error: null);
+
     try {
-      final userResponse = await api.getRequest("/users/me");
-      final appointmentResponse = await api.getRequest("/appointments/doctor");
+      final responses = await Future.wait([
+        api.getRequest("/users/me"),
+        api.getRequest("/appointments/doctor"),
+      ], eagerError: false);
+
+      final userResponse = responses[0];
+      final appointmentResponse = responses[1];
 
       if (userResponse.statusCode == 200 &&
           appointmentResponse.statusCode == 200) {
@@ -57,12 +63,18 @@ class DoctorProfileNotifier extends Notifier<DoctorProfileState> {
           user: jsonDecode(userResponse.body),
           appointments: jsonDecode(appointmentResponse.body),
           isLoading: false,
+          error: null,
         );
-      } else if (userResponse.statusCode == 401) {
-        state = state.copyWith(isLoading: false, error: "session_expired");
-      } else {
-        state = state.copyWith(isLoading: false);
+        return;
       }
+
+      if (userResponse.statusCode == 401 ||
+          appointmentResponse.statusCode == 401) {
+        state = state.copyWith(isLoading: false, error: "session_expired");
+        return;
+      }
+
+      state = state.copyWith(isLoading: false, error: null);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
