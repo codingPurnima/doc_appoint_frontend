@@ -12,16 +12,54 @@ class DoctorProfileScreen extends ConsumerStatefulWidget {
       _DoctorProfileScreenState();
 }
 
-class _DoctorProfileScreenState
-    extends ConsumerState<DoctorProfileScreen> {
+class _DoctorProfileScreenState extends ConsumerState<DoctorProfileScreen> {
+  ProviderSubscription<DoctorProfileState>? _profileSubscription;
+  bool _hasHandledSessionExpiry = false;
 
   @override
   void initState() {
     super.initState();
 
     Future.microtask(() {
+      if (!mounted) return;
       ref.read(doctorProfileProvider.notifier).fetchProfileData();
     });
+
+    _profileSubscription = ref.listenManual<DoctorProfileState>(
+      doctorProfileProvider,
+      (previous, next) {
+        if (_hasHandledSessionExpiry || next.error != "session_expired") {
+          return;
+        }
+
+        _hasHandledSessionExpiry = true;
+
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          if (!mounted) return;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                "Oops! Seems like your session expired. "
+                "Please login again.",
+              ),
+            ),
+          );
+
+          await ref.read(doctorProfileProvider.notifier).logout();
+
+          if (!mounted) return;
+
+          Navigator.pushNamedAndRemoveUntil(context, "/", (_) => false);
+        });
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _profileSubscription?.close();
+    super.dispose();
   }
 
   Future<void> completeAppointment(
@@ -34,17 +72,12 @@ class _DoctorProfileScreenState
       builder: (dialogContext) => AlertDialog(
         title: const Row(
           children: [
-            Icon(
-              Icons.check_circle_outline,
-              color: AppColors.completedDot,
-            ),
+            Icon(Icons.check_circle_outline, color: AppColors.completedDot),
             SizedBox(width: 8),
             Text("Complete Appointment"),
           ],
         ),
-        content: const Text(
-          "Mark this consultation as completed?",
-        ),
+        content: const Text("Mark this consultation as completed?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
@@ -66,9 +99,7 @@ class _DoctorProfileScreenState
 
               if (status == 200) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Appointment completed"),
-                  ),
+                  const SnackBar(content: Text("Appointment completed")),
                 );
               }
             },
@@ -79,19 +110,13 @@ class _DoctorProfileScreenState
     );
   }
 
-  Future<void> logout(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
+  Future<void> logout(BuildContext context, WidgetRef ref) async {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Row(
           children: [
-            Icon(
-              Icons.logout_rounded,
-              color: AppColors.bookedDot,
-            ),
+            Icon(Icons.logout_rounded, color: AppColors.bookedDot),
             SizedBox(width: 8),
             Text("Logout"),
           ],
@@ -110,19 +135,13 @@ class _DoctorProfileScreenState
               minimumSize: const Size(90, 38),
             ),
             onPressed: () async {
-              await ref
-                  .read(doctorProfileProvider.notifier)
-                  .logout();
+              await ref.read(doctorProfileProvider.notifier).logout();
 
               if (!context.mounted) return;
 
               Navigator.pop(dialogContext);
 
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                "/",
-                (route) => false,
-              );
+              Navigator.pushNamedAndRemoveUntil(context, "/", (route) => false);
             },
             child: const Text("Logout"),
           ),
@@ -134,31 +153,6 @@ class _DoctorProfileScreenState
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(doctorProfileProvider);
-
-    ref.listen(doctorProfileProvider, (previous, next) async {
-      if (next.error == "session_expired") {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "Oops! Seems like your session expired. "
-              "Please login again.",
-            ),
-          ),
-        );
-
-        await ref
-            .read(doctorProfileProvider.notifier)
-            .logout();
-
-        if (!context.mounted) return;
-
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          "/",
-          (_) => false,
-        );
-      }
-    });
 
     return ProfileScreen(
       user: state.user,
