@@ -1,38 +1,58 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import '../config/app_config.dart';
 import 'auth_service.dart';
 
 class ApiService {
-  static const String baseUrl = "https://doc-appoint-backend-meb4.onrender.com";
+  static String get baseUrl => AppConfig.baseUrl;
+  static const Duration _requestTimeout = AppConfig.requestTimeout;
 
   Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString("access_token");
+    await AuthService().loadTokens();
+    return AuthService.accessToken;
+  }
+
+  Map<String, String> _jsonHeaders({String? token}) {
+    final headers = <String, String>{"Content-Type": "application/json"};
+    if (token != null && token.isNotEmpty) {
+      headers["Authorization"] = "Bearer $token";
+    }
+    return headers;
+  }
+
+  Future<http.Response> _withTimeout(
+    Future<http.Response> Function() request,
+  ) async {
+    try {
+      return await request().timeout(_requestTimeout);
+    } on TimeoutException {
+      throw TimeoutException('Request timed out after $_requestTimeout.');
+    }
   }
 
   Future<http.Response> getRequest(String endpoint) async {
-    String? token = await getToken();
+    final token = await getToken();
 
-    var response = await http.get(
-      Uri.parse("$baseUrl$endpoint"),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token",
-      },
-    );
+    var response = await _withTimeout(() async {
+      return http.get(
+        Uri.parse("$baseUrl$endpoint"),
+        headers: _jsonHeaders(token: token),
+      );
+    });
 
     if (response.statusCode == 401) {
       final authService = AuthService();
       final newToken = await authService.refreshAccessToken();
       if (newToken != null) {
-        response = await http.get(
-          Uri.parse("$baseUrl$endpoint"),
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer $newToken",
-          },
-        );
+        response = await _withTimeout(() async {
+          return http.get(
+            Uri.parse("$baseUrl$endpoint"),
+            headers: _jsonHeaders(token: newToken),
+          );
+        });
+      } else {
+        await authService.clearSessionData();
       }
     }
     return response;
@@ -42,29 +62,30 @@ class ApiService {
     String endpoint,
     Map<String, dynamic> body,
   ) async {
-    String? token = await getToken();
+    final token = await getToken();
 
-    var response = await http.post(
-      Uri.parse("$baseUrl$endpoint"),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token",
-      },
-      body: jsonEncode(body),
-    );
+    var response = await _withTimeout(() async {
+      return http.post(
+        Uri.parse("$baseUrl$endpoint"),
+        headers: _jsonHeaders(token: token),
+        body: jsonEncode(body),
+      );
+    });
+
     if (response.statusCode == 401) {
       final authService = AuthService();
       final newToken = await authService.refreshAccessToken();
 
       if (newToken != null) {
-        response = await http.post(
-          Uri.parse("$baseUrl$endpoint"),
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer $newToken",
-          },
-          body: jsonEncode(body),
-        );
+        response = await _withTimeout(() async {
+          return http.post(
+            Uri.parse("$baseUrl$endpoint"),
+            headers: _jsonHeaders(token: newToken),
+            body: jsonEncode(body),
+          );
+        });
+      } else {
+        await authService.clearSessionData();
       }
     }
 
@@ -75,30 +96,30 @@ class ApiService {
     String endpoint,
     Map<String, dynamic> body,
   ) async {
-    String? token = await getToken();
+    final token = await getToken();
 
-    var response = await http.put(
-      Uri.parse("$baseUrl$endpoint"),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token",
-      },
-      body: jsonEncode(body),
-    );
+    var response = await _withTimeout(() async {
+      return http.put(
+        Uri.parse("$baseUrl$endpoint"),
+        headers: _jsonHeaders(token: token),
+        body: jsonEncode(body),
+      );
+    });
 
     if (response.statusCode == 401) {
       final authService = AuthService();
       final newToken = await authService.refreshAccessToken();
 
       if (newToken != null) {
-        response = await http.put(
-          Uri.parse("$baseUrl$endpoint"),
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer $newToken",
-          },
-          body: jsonEncode(body),
-        );
+        response = await _withTimeout(() async {
+          return http.put(
+            Uri.parse("$baseUrl$endpoint"),
+            headers: _jsonHeaders(token: newToken),
+            body: jsonEncode(body),
+          );
+        });
+      } else {
+        await authService.clearSessionData();
       }
     }
 
@@ -109,30 +130,30 @@ class ApiService {
     String endpoint,
     Map<String, dynamic> data,
   ) async {
-    String? token = await getToken();
+    final token = await getToken();
 
-    var response = await http.patch(
-      Uri.parse("$baseUrl$endpoint"),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token",
-      },
-      body: jsonEncode(data),
-    );
+    var response = await _withTimeout(() async {
+      return http.patch(
+        Uri.parse("$baseUrl$endpoint"),
+        headers: _jsonHeaders(token: token),
+        body: jsonEncode(data),
+      );
+    });
 
     if (response.statusCode == 401) {
       final authService = AuthService();
       final newToken = await authService.refreshAccessToken();
 
       if (newToken != null) {
-        response = await http.patch(
-          Uri.parse("$baseUrl$endpoint"),
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer $newToken",
-          },
-          body: jsonEncode(data),
-        );
+        response = await _withTimeout(() async {
+          return http.patch(
+            Uri.parse("$baseUrl$endpoint"),
+            headers: _jsonHeaders(token: newToken),
+            body: jsonEncode(data),
+          );
+        });
+      } else {
+        await authService.clearSessionData();
       }
     }
 
@@ -142,13 +163,12 @@ class ApiService {
   Future<List<dynamic>?> getAvailableSlots(String date) async {
     final token = await getToken();
 
-    final response = await http.get(
-      Uri.parse("$baseUrl/slots/available?date=$date"),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token",
-      },
-    );
+    final response = await _withTimeout(() async {
+      return http.get(
+        Uri.parse("$baseUrl/slots/available?date=$date"),
+        headers: _jsonHeaders(token: token),
+      );
+    });
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
@@ -159,17 +179,17 @@ class ApiService {
 
   Future<bool> bookAppointment(int slotId) async {
     final token = await getToken();
-    if (token == null) {
+    if (token == null || token.isEmpty) {
       return false;
     }
-    final response = await http.post(
-      Uri.parse("$baseUrl/appointments/book"),
-      headers: {
-        "Authorization": "Bearer $token",
-        "Content-Type": "application/json",
-      },
-      body: jsonEncode({"slot_id": slotId}),
-    );
+
+    final response = await _withTimeout(() async {
+      return http.post(
+        Uri.parse("$baseUrl/appointments/book"),
+        headers: _jsonHeaders(token: token),
+        body: jsonEncode({"slot_id": slotId}),
+      );
+    });
 
     return response.statusCode == 201;
   }
