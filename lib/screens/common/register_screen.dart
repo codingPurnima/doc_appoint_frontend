@@ -94,7 +94,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: Image.asset(
-                    'assets/images/DocAppointLogo.jpeg',
+                    'assets/icons/DocAppointLogo.png',
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => const Icon(
                       Icons.local_hospital_rounded,

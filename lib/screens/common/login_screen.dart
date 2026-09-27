@@ -85,8 +85,8 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 16),
               Center(
                 child: Container(
-                  width: 90,
-                  height: 90,
+                  width: 95,
+                  height: 95,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
@@ -101,7 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: Image.asset(
-                    'assets/images/DocAppointLogo.jpeg',
+                    'assets/icons/DocAppointLogo.png',
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => const Icon(
                       Icons.local_hospital_rounded,

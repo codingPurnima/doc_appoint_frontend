@@ -66,7 +66,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 width: 88,
                 height: 88,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.primary,
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
@@ -76,10 +76,10 @@ class _SplashScreenState extends State<SplashScreen> {
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.local_hospital_rounded,
-                  size: 48,
-                  color: AppColors.primary,
+                clipBehavior: Clip.antiAlias,
+                child: Image.asset(
+                  'assets/icons/DocAppointLogo.png',
+                  fit: BoxFit.cover,
                 ),
               ),
               const SizedBox(height: 24),
