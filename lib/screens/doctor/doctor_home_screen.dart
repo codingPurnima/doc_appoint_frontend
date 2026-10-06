@@ -52,12 +52,11 @@ class _DoctorHomeScreenState extends ConsumerState<DoctorHomeScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(doctorHomeProvider);
     final notifier = ref.read(doctorHomeProvider.notifier);
+    final visibleSlots = state.slots.where((slot) => !slot.isExpired).toList();
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text("Welcome!"),
-      ),
+      appBar: AppBar(title: const Text("Welcome!")),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -97,13 +96,16 @@ class _DoctorHomeScreenState extends ConsumerState<DoctorHomeScreen> {
                   ],
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    "${state.slots.length} Total",
+                    "Total ${visibleSlots.length} ",
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -124,163 +126,171 @@ class _DoctorHomeScreenState extends ConsumerState<DoctorHomeScreen> {
                         SizedBox(height: 12),
                         Text(
                           "Loading schedule...",
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                          ),
                         ),
                       ],
                     ),
                   )
                 : state.slots.isEmpty
-                    ? const EmptyStateView(
-                        icon: Icons.calendar_today_outlined,
-                        title: "No slots generated yet",
-                        subtitle: "Tap the + button below to create consultation slots for today.",
-                      )
-                    : GridView.builder(
-                        padding: const EdgeInsets.all(14),
-                        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                ? const EmptyStateView(
+                    icon: Icons.calendar_today_outlined,
+                    title: "No slots generated yet",
+                    subtitle:
+                        "Tap the + button below to create consultation slots for today.",
+                  )
+                : GridView.builder(
+                    padding: const EdgeInsets.all(14),
+                    gridDelegate:
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
                           maxCrossAxisExtent: 220,
                           crossAxisSpacing: 10,
                           mainAxisSpacing: 10,
                           childAspectRatio: 1.35,
                         ),
-                        itemCount: state.slots.length,
-                        itemBuilder: (context, index) {
-                          final slot = state.slots[index];
-                          final status = slot.status.toLowerCase();
+                    itemCount: visibleSlots.length,
+                    itemBuilder: (context, index) {
+                      final slot = visibleSlots[index];
+                      final status = slot.status.toLowerCase();
 
-                          Color borderColor;
-                          Color accentBg;
-                          if (status == "available") {
-                            borderColor = AppColors.availableBorder;
-                            accentBg = AppColors.availableBg;
-                          } else if (status == "booked") {
-                            borderColor = AppColors.bookedBorder;
-                            accentBg = AppColors.bookedBg;
-                          } else if (status == "frozen") {
-                            borderColor = AppColors.frozenBorder;
-                            accentBg = AppColors.frozenBg;
-                          } else {
-                            borderColor = AppColors.completedBorder;
-                            accentBg = AppColors.completedBg;
+                      Color borderColor;
+                      Color accentBg;
+                      if (status == "available") {
+                        borderColor = AppColors.availableBorder;
+                        accentBg = AppColors.availableBg;
+                      } else if (status == "booked") {
+                        borderColor = AppColors.bookedBorder;
+                        accentBg = AppColors.bookedBg;
+                      } else if (status == "frozen") {
+                        borderColor = AppColors.frozenBorder;
+                        accentBg = AppColors.frozenBg;
+                      } else {
+                        borderColor = AppColors.completedBorder;
+                        accentBg = AppColors.completedBg;
+                      }
+
+                      return InkWell(
+                        onTap: () async {
+                          if (slot.status == 'booked') {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Cannot freeze a booked slot"),
+                              ),
+                            );
+                          } else if (slot.status == "available" ||
+                              slot.status == "frozen") {
+                            try {
+                              await notifier.toggleFreezeSlot(slot.id);
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Slot updated")),
+                              );
+                            } catch (e) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Error updating slot"),
+                                ),
+                              );
+                            }
                           }
-
-                          return InkWell(
-                            onTap: () async {
-                              if (slot.status == 'booked') {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text("Cannot freeze a booked slot"),
-                                  ),
-                                );
-                              } else if (slot.status == "available" ||
-                                  slot.status == "frozen") {
-                                try {
-                                  await notifier.toggleFreezeSlot(slot.id);
-                                  if (!context.mounted) return;
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text("Slot updated")),
-                                  );
-                                } catch (e) {
-                                  if (!context.mounted) return;
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text("Error updating slot")),
-                                  );
-                                }
-                              }
-                            },
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: borderColor, width: 1.2),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.02),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: accentBg,
-                                      borderRadius: const BorderRadius.vertical(
-                                        top: Radius.circular(11),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        StatusBadge(status: slot.status),
-                                        if (status == "available" || status == "frozen")
-                                          Icon(
-                                            status == "frozen"
-                                                ? Icons.lock_outline
-                                                : Icons.lock_open_outlined,
-                                            size: 14,
-                                            color: AppColors.textSecondary,
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 8,
-                                      ),
-                                      child: SingleChildScrollView(
-                                        padding: EdgeInsets.zero,
-                                        physics: const BouncingScrollPhysics(),
-                                        child: Center(
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Text(
-                                                "${slot.startTime} - ${slot.endTime}",
-                                                textAlign: TextAlign.center,
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: AppColors.textPrimary,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                status == "available"
-                                                    ? "Tap to freeze"
-                                                    : status == "frozen"
-                                                        ? "Tap to unfreeze"
-                                                        : status == "booked"
-                                                            ? "Booked by patient"
-                                                            : "Completed",
-                                                style: const TextStyle(
-                                                  fontSize: 11,
-                                                  color: AppColors.textMuted,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
                         },
-                      ),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: borderColor, width: 1.2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.02),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: accentBg,
+                                  borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(11),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    StatusBadge(status: slot.status),
+                                    if (status == "available" ||
+                                        status == "frozen")
+                                      Icon(
+                                        status == "frozen"
+                                            ? Icons.lock_outline
+                                            : Icons.lock_open_outlined,
+                                        size: 14,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 8,
+                                  ),
+                                  child: SingleChildScrollView(
+                                    padding: EdgeInsets.zero,
+                                    physics: const BouncingScrollPhysics(),
+                                    child: Center(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            "${slot.startTime} - ${slot.endTime}",
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            status == "available"
+                                                ? "Tap to freeze"
+                                                : status == "frozen"
+                                                ? "Tap to unfreeze"
+                                                : status == "booked"
+                                                ? "Booked by patient"
+                                                : "Completed",
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: AppColors.textMuted,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),

@@ -44,8 +44,11 @@ class DoctorHomeNotifier extends Notifier<DoctorHomeState> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data is List) {
+          final newSlots = data.map((json) {
+            return Slot.fromJson(json);
+          }).toList();
           state = state.copyWith(
-            slots: data.map((json) => Slot.fromJson(json)).toList(),
+            slots: newSlots,
             isLoading: false,
             error: null,
           );
