@@ -101,6 +101,12 @@ class _DoctorProfileScreenState extends ConsumerState<DoctorProfileScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("Appointment completed")),
                 );
+              } else if (status == 400) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Can't complete appointment ahead of time"),
+                  ),
+                );
               }
             },
             child: const Text("Complete"),
