@@ -1,9 +1,12 @@
+import 'package:doc_appoint_frontend/config/app_config.dart';
 import 'package:doc_appoint_frontend/services/api_service.dart';
 import 'package:doc_appoint_frontend/theme/app_theme.dart';
 import 'package:doc_appoint_frontend/widgets/empty_state_view.dart';
 import 'package:doc_appoint_frontend/widgets/status_badge.dart';
 import 'package:flutter/material.dart';
 import '../../models/slot.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../services/razorpay_service.dart';
 
 class PatientHomeScreen extends StatefulWidget {
   const PatientHomeScreen({super.key});
@@ -16,8 +19,29 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
   @override
   void initState() {
     super.initState();
+    _razorpayService = RazorpayService(
+      baseUrl: AppConfig.baseUrl,
+      getToken: () => _storage.read(key: 'access_token'),
+    );
+
+    _razorpayService.initialize();
+    _razorpayService.onMessage = (message) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    };
+
+    _razorpayService.onPaymentVerified = (appointmentId) {
+      // Refresh appointments or reload patient home data here.
+      fetchSlots();
+    };
     fetchSlots();
   }
+
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  late final RazorpayService _razorpayService;
 
   List<Slot> slots = [];
   bool isLoading = true;
@@ -94,24 +118,8 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
             style: ElevatedButton.styleFrom(minimumSize: const Size(100, 42)),
             onPressed: () async {
               Navigator.pop(dialogContext);
-              final success = await ApiService().bookAppointment(slot.id);
-
+              await _razorpayService.payForSlot(slot.id);
               if (!mounted) return;
-
-              if (success) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      "Booking Successful. Try to reach 10 mins earlier than your time",
-                    ),
-                  ),
-                );
-                fetchSlots();
-              } else {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text("Booking Failed")));
-              }
             },
             child: const Text("Confirm"),
           ),
