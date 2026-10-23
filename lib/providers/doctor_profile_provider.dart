@@ -81,12 +81,20 @@ class DoctorProfileNotifier extends Notifier<DoctorProfileState> {
   }
 
   Future<int> completeAppointment(int id) async {
-    final response = await api.patchRequest("/appointments/$id/complete", {});
+  try {
+    final response = await api.patchRequest(
+      "/appointments/$id/complete",
+      {},
+    );
+
     if (response.statusCode == 200) {
       await fetchProfileData();
     }
     return response.statusCode;
+  } catch (e) {
+    rethrow;
   }
+}
 
   Future<void> logout() async {
     await AuthService().logout();
