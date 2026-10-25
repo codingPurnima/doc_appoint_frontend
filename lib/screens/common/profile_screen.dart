@@ -9,6 +9,7 @@ class ProfileScreen extends StatelessWidget {
   final bool isLoading;
   final VoidCallback onLogout;
   final Function(int)? onCancelOrCompleteAppointment;
+  final Function(Map<String, dynamic>)? onResumePayment;
   final String title;
 
   const ProfileScreen({
@@ -19,6 +20,7 @@ class ProfileScreen extends StatelessWidget {
     required this.onLogout,
     required this.title,
     this.onCancelOrCompleteAppointment,
+    this.onResumePayment,
   });
 
   @override
@@ -129,12 +131,19 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: isDoctor ? AppColors.completedBg : AppColors.availableBg,
+                    color: isDoctor
+                        ? AppColors.completedBg
+                        : AppColors.availableBg,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: isDoctor ? AppColors.completedBorder : AppColors.availableBorder,
+                      color: isDoctor
+                          ? AppColors.completedBorder
+                          : AppColors.availableBorder,
                     ),
                   ),
                   child: Text(
@@ -142,7 +151,9 @@ class ProfileScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: isDoctor ? AppColors.completedText : AppColors.availableText,
+                      color: isDoctor
+                          ? AppColors.completedText
+                          : AppColors.availableText,
                     ),
                   ),
                 ),
@@ -186,15 +197,20 @@ class ProfileScreen extends StatelessWidget {
                     subtitle: "Booked consultations will appear here.",
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     itemCount: appointments.length,
                     itemBuilder: (context, index) {
                       final appointment = appointments[index];
                       final status = appointment["status"]?.toString() ?? "";
                       final date = appointment["date"]?.toString() ?? "";
-                      final startTime = appointment["start_time"]?.toString() ?? "";
+                      final startTime =
+                          appointment["start_time"]?.toString() ?? "";
                       final endTime = appointment["end_time"]?.toString() ?? "";
-                      final patientName = appointment["patient_name"]?.toString() ?? "Patient";
+                      final patientName =
+                          appointment["patient_name"]?.toString() ?? "Patient";
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
@@ -238,7 +254,10 @@ class ProfileScreen extends StatelessWidget {
                                 StatusBadge(status: status),
                               ],
                             ),
-                            const Divider(height: 18, color: AppColors.cardBorder),
+                            const Divider(
+                              height: 18,
+                              color: AppColors.cardBorder,
+                            ),
                             Row(
                               children: [
                                 const Icon(
@@ -275,24 +294,31 @@ class ProfileScreen extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            if (status == "booked" && onCancelOrCompleteAppointment != null) ...[
+                            if (status == "booked" &&
+                                onCancelOrCompleteAppointment != null) ...[
                               const SizedBox(height: 12),
                               Align(
                                 alignment: Alignment.centerRight,
                                 child: isDoctor
                                     ? ElevatedButton.icon(
-                                        onPressed: () => onCancelOrCompleteAppointment?.call(
-                                          appointment["appointment_id"],
-                                        ),
+                                        onPressed: () =>
+                                            onCancelOrCompleteAppointment?.call(
+                                              appointment["appointment_id"],
+                                            ),
                                         icon: const Icon(Icons.check, size: 16),
                                         label: const Text("Complete"),
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: AppColors.completedDot,
+                                          backgroundColor:
+                                              AppColors.completedDot,
                                           foregroundColor: Colors.white,
                                           minimumSize: const Size(100, 36),
-                                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 14,
+                                          ),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
                                           ),
                                           textStyle: const TextStyle(
                                             fontSize: 13,
@@ -301,18 +327,25 @@ class ProfileScreen extends StatelessWidget {
                                         ),
                                       )
                                     : OutlinedButton.icon(
-                                        onPressed: () => onCancelOrCompleteAppointment?.call(
-                                          appointment["appointment_id"],
-                                        ),
+                                        onPressed: () =>
+                                            onCancelOrCompleteAppointment?.call(
+                                              appointment["appointment_id"],
+                                            ),
                                         icon: const Icon(Icons.close, size: 16),
                                         label: const Text("Cancel"),
                                         style: OutlinedButton.styleFrom(
                                           foregroundColor: AppColors.bookedText,
-                                          side: const BorderSide(color: AppColors.bookedBorder),
+                                          side: const BorderSide(
+                                            color: AppColors.bookedBorder,
+                                          ),
                                           minimumSize: const Size(90, 36),
-                                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 14,
+                                          ),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
                                           ),
                                           textStyle: const TextStyle(
                                             fontSize: 13,
@@ -320,6 +353,36 @@ class ProfileScreen extends StatelessWidget {
                                           ),
                                         ),
                                       ),
+                              ),
+                            ],
+                            if (!isDoctor &&
+                                status == "pending_payment" &&
+                                onResumePayment != null) ...[
+                              const SizedBox(height: 12),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: ElevatedButton.icon(
+                                  onPressed: () => onResumePayment?.call(
+                                    Map<String, dynamic>.from(appointment),
+                                  ),
+                                  icon: const Icon(Icons.payment, size: 16),
+                                  label: const Text("Resume Payment"),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    foregroundColor: Colors.white,
+                                    minimumSize: const Size(150, 36),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    textStyle: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ],
                           ],
