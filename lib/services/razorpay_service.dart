@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/widgets.dart' show debugPrint;
 import 'package:http/http.dart' as http;
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 
@@ -38,7 +39,7 @@ class RazorpayService {
       );
 
       if (orderResponse.statusCode < 200 || orderResponse.statusCode >= 300) {
-        onMessage?.call('Could not create booking: ${orderResponse.body}');
+        onMessage?.call('Could not create booking. Check existing bookings.');
         return;
       }
 
@@ -104,7 +105,7 @@ class RazorpayService {
 
   void _handlePaymentError(PaymentFailureResponse response) {
     onMessage?.call(
-      'Payment was not completed: ${response.message ?? 'Please try again.'}',
+      'Payment was not completed. Please try again. ',
     );
   }
 
@@ -113,6 +114,91 @@ class RazorpayService {
       'External wallet selected: ${response.walletName ?? 'Unknown'}',
     );
   }
+    
+  Future<List<Map<String, dynamic>>> getPendingPayments() async {
+    try {
+      final token = await getToken();
+
+      if (token == null || token.isEmpty) {
+        return [];
+      }
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/payments/pending'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode != 200) {
+        debugPrint('Pending payments failed: ${response.body}');
+        return [];
+      }
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+      return (data['pending_payments'] as List)
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    } catch (e) {
+      debugPrint('Error fetching pending payments: $e');
+      return [];
+    }
+  }
+
+  
+  Future<void> resumePayment(int appointmentId) async {
+    try {
+      final pendingPayments = await getPendingPayments();
+
+      Map<String, dynamic>? pending;
+
+      for (final payment in pendingPayments) {
+        if (payment['appointment_id']?.toString() ==
+            appointmentId.toString()) {
+          pending = payment;
+          break;
+        }
+      }
+
+      if (pending == null) {
+        onMessage?.call(
+          'This payment is no longer available. '
+          'Please refresh your appointments.',
+        );
+        return;
+      }
+
+      final orderId = pending['order_id']?.toString();
+      final keyId = pending['key_id']?.toString();
+      final amount = pending['amount'];
+
+      if (orderId == null ||
+          orderId.isEmpty ||
+          keyId == null ||
+          keyId.isEmpty ||
+          amount == null) {
+        onMessage?.call('Payment details are incomplete. Please try again.');
+        return;
+      }
+
+      _razorpay.open({
+        'key': keyId,
+        'amount': amount,
+        'currency': pending['currency'] ?? 'INR',
+        'name': 'DocAppoint',
+        'description': 'Resume appointment payment',
+        'order_id': orderId,
+        'timeout': 300,
+      });
+    } catch (e) {
+      onMessage?.call('Unable to resume payment. Please try again.');
+      debugPrint('Resume payment error: $e');
+    }
+  }
+
+
 
   void dispose() {
     _razorpay.clear();
