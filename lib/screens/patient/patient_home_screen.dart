@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import '../../models/slot.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../services/razorpay_service.dart';
+import '../../models/doctor_profile.dart';
+import '../../widgets/doctor_info_row.dart';
 
 class PatientHomeScreen extends StatefulWidget {
   const PatientHomeScreen({super.key});
@@ -28,9 +30,9 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
     _razorpayService.onMessage = (message) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     };
 
     _razorpayService.onPaymentVerified = (appointmentId) {
@@ -45,6 +47,10 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
 
   List<Slot> slots = [];
   bool isLoading = true;
+
+  DoctorProfile? _doctorProfile;
+  bool _isDoctorProfileLoading = false;
+  String? _doctorProfileError;
 
   Future<void> fetchSlots() async {
     final apiService = ApiService();
@@ -125,6 +131,298 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _showDoctorProfile() async {
+    if (_doctorProfile != null) {
+      _openDoctorProfileDialog();
+      return;
+    }
+
+    setState(() {
+      _isDoctorProfileLoading = true;
+      _doctorProfileError = null;
+    });
+
+    try {
+      // Replace with the actual users.id of your demo doctor.
+      final profile = await ApiService().getDoctorProfile(2);
+
+      if (!mounted) return;
+
+      setState(() {
+        _doctorProfile = profile;
+        _isDoctorProfileLoading = false;
+      });
+
+      _openDoctorProfileDialog();
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _doctorProfileError = e.toString();
+        _isDoctorProfileLoading = false;
+      });
+
+      _openDoctorProfileDialog();
+    }
+  }
+
+  void _openDoctorProfileDialog() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        if (_isDoctorProfileLoading) {
+          return const AlertDialog(
+            content: Row(
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 16),
+                Text("Loading doctor profile..."),
+              ],
+            ),
+          );
+        }
+
+        final doctor = _doctorProfile;
+
+        if (doctor == null) {
+          return AlertDialog(
+            title: const Text("Doctor Information"),
+            content: Text(_doctorProfileError ?? "Doctor profile unavailable."),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text("Close"),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  _showDoctorProfile();
+                },
+                child: const Text("Retry"),
+              ),
+            ],
+          );
+        }
+
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+          contentPadding: EdgeInsets.zero,
+          clipBehavior: Clip.antiAlias,
+          titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 8),
+
+          title: Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  "Doctor Profile",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                icon: const Icon(Icons.close),
+                visualDensity: VisualDensity.compact,
+              ),
+            ],
+          ),
+
+          content: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Doctor identity
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primaryContainer.withValues(alpha: 0.45),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 28,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
+                          child:
+                              (doctor.profileImageUrl?.trim().isNotEmpty ??
+                                  false)
+                              ? ClipOval(
+                                  child: Image.network(
+                                    doctor.profileImageUrl!.trim(),
+                                    width: 56,
+                                    height: 56,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Icon(
+                                        Icons.medical_services_outlined,
+                                        size: 28,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onPrimary,
+                                      );
+                                    },
+                                  ),
+                                )
+                              : Icon(
+                                  Icons.medical_services_outlined,
+                                  size: 28,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimary,
+                                ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                doctor.fullName,
+                                style: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                doctor.specialization,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 22),
+
+                  // Professional details
+                  const Text(
+                    "Professional Details",
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 14),
+
+                  DoctorInfoRow(
+                    icon: Icons.school_outlined,
+                    label: "Qualification",
+                    value: doctor.qualification,
+                  ),
+                  DoctorInfoRow(
+                    icon: Icons.work_outline,
+                    label: "Experience",
+                    value: "${doctor.experienceYears} years",
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  // Clinic details
+                  const Text(
+                    "Clinic Information",
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 14),
+
+                  DoctorInfoRow(
+                    icon: Icons.local_hospital_outlined,
+                    label: "Clinic",
+                    value: doctor.clinicName,
+                  ),
+                  DoctorInfoRow(
+                    icon: Icons.location_on_outlined,
+                    label: "Address",
+                    value: doctor.clinicAddress,
+                  ),
+
+                  if (doctor.bio?.trim().isNotEmpty == true) ...[
+                    const SizedBox(height: 18),
+                    const Text(
+                      "About the Doctor",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      doctor.bio!.trim(),
+                      style: TextStyle(
+                        height: 1.5,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 20),
+
+                  // Consultation fee
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        // Icon(
+                        //   Icons.currency_rupee,
+                        //   color: Theme.of(context).colorScheme.primary,
+                        // ),
+                        // const SizedBox(width: 10),
+                        const Expanded(
+                          child: Text(
+                            "Consultation Fee   ",
+                            style: TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                        Text(
+                          "₹${doctor.consultationFee}",
+                          style: TextStyle(
+                            fontSize: 19,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text("View availability"),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -305,23 +603,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => const AlertDialog(
-              title: Row(
-                children: [
-                  Icon(Icons.medical_information, color: AppColors.primary),
-                  SizedBox(width: 8),
-                  Text("Doctor Information"),
-                ],
-              ),
-              content: Text(
-                "You are viewing slots for your assigned doctor. Tap 'Book' on any available slot to confirm your appointment.",
-              ),
-            ),
-          );
-        },
+        onPressed: _showDoctorProfile,
         backgroundColor: Colors.white,
         foregroundColor: AppColors.primary,
         elevation: 3,
