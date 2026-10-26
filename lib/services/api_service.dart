@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
 import 'auth_service.dart';
+import '../models/doctor_profile.dart';
 
 class ApiService {
   static String get baseUrl => AppConfig.baseUrl;
@@ -220,5 +221,23 @@ class ApiService {
     if (response.statusCode != 200) {
       throw Exception("Failed to complete appointment");
     }
+  }
+
+  Future<DoctorProfile> getDoctorProfile(int doctorId) async {
+    final response = await getRequest(
+      "/doctors/$doctorId/profile",
+    );
+
+    if (response.statusCode == 200) {
+      return DoctorProfile.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
+    }
+
+    if (response.statusCode == 404) {
+      throw Exception("Doctor profile not found or not approved.");
+    }
+
+    throw Exception("Failed to load doctor profile (${response.statusCode}).");
   }
 }
