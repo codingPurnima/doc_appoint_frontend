@@ -1,3 +1,7 @@
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icons/DocAppointLauncher.png"
 name: doc_appoint_frontend
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
@@ -37,10 +41,13 @@ dependencies:
   shared_preferences: ^2.5.5
   http: ^1.6.0
   flutter_riverpod: ^3.3.2
+  flutter_secure_storage: ^11.0.0
+  razorpay_flutter: ^1.4.7
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.14.4
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -62,7 +69,7 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/images/DocAppointLogo.jpeg
+    - assets/icons/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

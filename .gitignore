@@ -43,3 +43,18 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+
+# Android signing
+*.jks
+*.keystore
+android/key.properties
+# Widget Preview related
+.widget_preview/
+
+
+
+# temporarily ignore android release docs
+scripts/
+ANDROID_RELEASE_BUILD.md 
+ANDROID_SIGNING_SETUP.md 

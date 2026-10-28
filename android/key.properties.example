@@ -1,0 +1,11 @@
+# storePassword=YOUR_STORE_PASSWORD_HERE
+# keyPassword=YOUR_KEY_PASSWORD_HERE
+# keyAlias=doc_appoint_release
+# storeFile=/absolute/path/to/doc_appoint_release.jks
+
+# INSTRUCTIONS:
+# 1. Generate a release keystore using keytool (see ANDROID_SIGNING_SETUP.md)
+# 2. Fill in the values above with your actual keystore credentials
+# 3. Make sure storeFile is an absolute path to your keystore file
+# 4. This file is in .gitignore and must NEVER be committed to version control
+# 5. For CI/CD, these values should be injected as environment variables
