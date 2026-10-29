@@ -36,38 +36,52 @@ class DoctorHomeNotifier extends Notifier<DoctorHomeState> {
     return const DoctorHomeState(slots: [], isLoading: true, error: null);
   }
 
-  Future<void> fetchSlots() async {
-    try {
-      final today = DateTime.now().toIso8601String().split("T")[0];
-      final response = await api.getRequest("/slots?date=$today");
+Future<void> fetchSlots({DateTime? date}) async {
+  state = state.copyWith(isLoading: true, error: null);
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data is List) {
-          final newSlots = data.map((json) {
-            return Slot.fromJson(json);
-          }).toList();
-          state = state.copyWith(
-            slots: newSlots,
-            isLoading: false,
-            error: null,
-          );
-        } else {
-          state = state.copyWith(
-            isLoading: false,
-            error: "Unexpected response",
-          );
-        }
+  try {
+    final selectedDate = date ?? DateTime.now();
+    final formattedDate =
+        '${selectedDate.year.toString().padLeft(4, '0')}-'
+        '${selectedDate.month.toString().padLeft(2, '0')}-'
+        '${selectedDate.day.toString().padLeft(2, '0')}';
+
+    final response = await api.getRequest(
+      "/slots?date=$formattedDate",
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      if (data is List) {
+        final newSlots = data
+            .map((json) => Slot.fromJson(json))
+            .toList();
+
+        state = state.copyWith(
+          slots: newSlots,
+          isLoading: false,
+          error: null,
+        );
       } else {
         state = state.copyWith(
           isLoading: false,
-          error: "Failed to fetch slots",
+          error: "Unexpected response",
         );
       }
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+    } else {
+      state = state.copyWith(
+        isLoading: false,
+        error: "Failed to fetch slots",
+      );
     }
+  } catch (e) {
+    state = state.copyWith(
+      isLoading: false,
+      error: e.toString(),
+    );
   }
+}
 
   Future<void> toggleFreezeSlot(int id) async {
     await api.toggleFreezeSlot(id);
