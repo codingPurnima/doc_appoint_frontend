@@ -7,21 +7,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 Future<void> main() async {
-  final binding = WidgetsFlutterBinding.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized();
 
-  // Delay Flutter's first rendered frame while authentication is resolved.
-  binding.deferFirstFrame();
-
+  // Resolve authentication before creating the Flutter app.
   final Widget initialScreen = await _resolveInitialScreen();
-
   runApp(
     ProviderScope(
       child: MyApp(initialScreen: initialScreen),
     ),
   );
-
-  // Display the app only after the correct initial screen has been selected.
-  binding.allowFirstFrame();
 }
 
 Future<Widget> _resolveInitialScreen() async {
