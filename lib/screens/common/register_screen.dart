@@ -47,7 +47,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Registration Successful. Please Login"),
+          content: Text("Registration Successful. Please Login \n खाता बन गया। लॉगिन करें"),
         ),
       );
 
@@ -132,7 +132,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     TextFormField(
                       controller: _nameController,
                       decoration: const InputDecoration(
-                        labelText: "Full Name",
+                        labelText: "Full Name / पूरा नाम",
                         hintText: "Enter your full name",
                         prefixIcon: Icon(Icons.person_outline, size: 22),
                       ),
@@ -154,7 +154,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _mobileController,
                       keyboardType: TextInputType.phone,
                       decoration: const InputDecoration(
-                        labelText: "Phone Number",
+                        labelText: "Phone Number / फ़ोन नंबर",
                         hintText: "Enter 10-digit phone number",
                         prefixIcon: Icon(Icons.phone_outlined, size: 22),
                       ),
@@ -173,7 +173,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
-                        labelText: "Password",
+                        labelText: "Password / पासवर्ड",
                         hintText: "At least 8 characters",
                         prefixIcon: const Icon(Icons.lock_outline, size: 22),
                         suffixIcon: IconButton(
@@ -214,7 +214,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             )
-                          : const Text("Register"),
+                          : const Text("Register / खाता बनाएं"),
                     ),
                   ],
                 ),

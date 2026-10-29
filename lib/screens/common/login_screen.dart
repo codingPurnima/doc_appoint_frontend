@@ -139,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     TextFormField(
                       controller: _nameController,
                       decoration: const InputDecoration(
-                        labelText: "Full Name",
+                        labelText: "Full Name / पूरा नाम",
                         hintText: "Enter your full name",
                         prefixIcon: Icon(Icons.person_outline, size: 22),
                       ),
@@ -161,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
-                        labelText: "Password",
+                        labelText: "Password / पासवर्ड",
                         hintText: "Enter your password",
                         prefixIcon: const Icon(Icons.lock_outline, size: 22),
                         suffixIcon: IconButton(
