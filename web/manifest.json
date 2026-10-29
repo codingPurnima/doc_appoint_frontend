@@ -1,11 +1,11 @@
 
 {
-  "name": "DocAppoint - Doctor Appointments",
+  "name": "DocAppoint - Doctor Appointments Made Simple",
   "short_name": "DocAppoint",
-  "start_url": ".",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#0175C2",
-  "theme_color": "#0175C2",
+  "background_color": "##0F2942",
+  "theme_color": "#0F2942",
   "description": "Book and manage doctor appointments with DocAppoint.",
   "orientation": "portrait-primary",
   "prefer_related_applications": false,
