@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
+import 'dart:convert';
 
 class GenerateSlotsDialog extends StatefulWidget {
   final VoidCallback onSlotsGenerated;
@@ -20,6 +21,10 @@ class _GenerateSlotsDialogState extends State<GenerateSlotsDialog> {
 
   bool _isSubmitting = false;
 
+  DateTime _startDate = DateUtils.dateOnly(DateTime.now());
+  int _durationDays = 7;
+  bool _weekdaysOnly = false;
+
   @override
   void dispose() {
     startController.dispose();
@@ -30,16 +35,68 @@ class _GenerateSlotsDialogState extends State<GenerateSlotsDialog> {
     super.dispose();
   }
 
+  String _formatDate(DateTime date) {
+    final year = date.year.toString().padLeft(4, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+
+    return '$year-$month-$day';
+  }
+
+  Future<void> _pickStartDate() async {
+    final today = DateUtils.dateOnly(DateTime.now());
+
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: _startDate.isBefore(today) ? today : _startDate,
+      firstDate: today,
+      lastDate: today.add(const Duration(days: 365)),
+    );
+
+    if (selected != null && mounted) {
+      setState(() {
+        _startDate = DateUtils.dateOnly(selected);
+      });
+    }
+  }
+
+  Future<void> _pickTime(TextEditingController controller) async {
+    final parts = controller.text.trim().split(':');
+
+    final initialTime = parts.length == 2
+        ? TimeOfDay(
+            hour: int.tryParse(parts[0]) ?? 9,
+            minute: int.tryParse(parts[1]) ?? 0,
+          )
+        : const TimeOfDay(hour: 9, minute: 0);
+
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+      initialEntryMode: TimePickerEntryMode.dial,
+      helpText: 'SELECT TIME',
+    );
+
+    if (picked != null && mounted) {
+      controller.text =
+          '${picked.hour.toString().padLeft(2, '0')}:'
+          '${picked.minute.toString().padLeft(2, '0')}';
+    }
+  }
+
   Future<void> _submit() async {
     final duration = int.tryParse(durationController.text.trim());
     if (duration == null || duration <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter a valid slot duration in minutes")),
+        const SnackBar(
+          content: Text("Please enter a valid slot duration in minutes"),
+        ),
       );
       return;
     }
 
-    if (startController.text.trim().isEmpty || endController.text.trim().isEmpty) {
+    if (startController.text.trim().isEmpty ||
+        endController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Start and End times are required")),
       );
@@ -48,8 +105,8 @@ class _GenerateSlotsDialogState extends State<GenerateSlotsDialog> {
 
     setState(() => _isSubmitting = true);
 
-    final today = DateTime.now().toIso8601String().split("T")[0];
-    final breaks = breakStartController.text.trim().isNotEmpty &&
+    final breaks =
+        breakStartController.text.trim().isNotEmpty &&
             breakEndController.text.trim().isNotEmpty
         ? [
             {
@@ -59,29 +116,39 @@ class _GenerateSlotsDialogState extends State<GenerateSlotsDialog> {
           ]
         : <Map<String, String>>[];
 
-    final response = await ApiService().postRequest("/slots/generate", {
-      "date": today,
+    final response = await ApiService().postRequest("/slots/generate-range", {
+      "start_date": _formatDate(_startDate),
+      "duration_days": _durationDays,
+      "weekdays_only": _weekdaysOnly,
       "day_start": startController.text.trim(),
       "day_end": endController.text.trim(),
       "slot_duration_minutes": duration,
       "breaks": breaks,
     });
-
     if (!mounted) return;
     setState(() => _isSubmitting = false);
 
     if (response.statusCode == 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final results = data["results"] as List<dynamic>;
+
+      final created = data["total_slots_created"] as int;
+      final skipped = results
+          .where((item) => item["status"] == "skipped")
+          .length;
+
       widget.onSlotsGenerated();
       Navigator.pop(context);
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Slots generated successfully")),
+        SnackBar(
+          content: Text("Created $created slots. $skipped date(s) skipped."),
+        ),
       );
     } else {
-      Navigator.pop(context);
+      final message = response.body;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Error generating slots. Check your slot fields."),
-        ),
+        SnackBar(content: Text("Slot generation failed: $message")),
       );
     }
   }
@@ -111,15 +178,64 @@ class _GenerateSlotsDialogState extends State<GenerateSlotsDialog> {
                 style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
               ),
               const SizedBox(height: 16),
+              const Text(
+                "Start Date",
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: _isSubmitting ? null : _pickStartDate,
+                icon: const Icon(Icons.calendar_month),
+                label: Text(_formatDate(_startDate)),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<int>(
+                initialValue: _durationDays,
+                decoration: const InputDecoration(labelText: "Generate for"),
+                items: const [
+                  DropdownMenuItem(value: 1, child: Text("One day")),
+                  DropdownMenuItem(value: 3, child: Text("3 days")),
+                  DropdownMenuItem(value: 7, child: Text("7 days")),
+                  DropdownMenuItem(value: 14, child: Text("14 days")),
+                ],
+                onChanged: _isSubmitting
+                    ? null
+                    : (value) {
+                        if (value != null) {
+                          setState(() => _durationDays = value);
+                        }
+                      },
+              ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text("Weekdays only"),
+                subtitle: const Text("Skip Saturdays and Sundays"),
+                value: _weekdaysOnly,
+                onChanged: _isSubmitting
+                    ? null
+                    : (value) {
+                        setState(() => _weekdaysOnly = value);
+                      },
+              ),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: startController,
+                      readOnly: true,
+                      onTap: () => _pickTime(startController),
                       decoration: const InputDecoration(
                         labelText: "Start Time",
-                        hintText: "09:00",
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        suffixIcon: Icon(Icons.access_time),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
                       ),
                     ),
                   ),
@@ -127,10 +243,15 @@ class _GenerateSlotsDialogState extends State<GenerateSlotsDialog> {
                   Expanded(
                     child: TextField(
                       controller: endController,
+                      readOnly: true,
+                      onTap: () => _pickTime(endController),
                       decoration: const InputDecoration(
                         labelText: "End Time",
-                        hintText: "17:00",
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        suffixIcon: Icon(Icons.access_time),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
                       ),
                     ),
                   ),
@@ -144,7 +265,10 @@ class _GenerateSlotsDialogState extends State<GenerateSlotsDialog> {
                   labelText: "Slot Duration (minutes)",
                   hintText: "30",
                   suffixText: "min",
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -162,10 +286,15 @@ class _GenerateSlotsDialogState extends State<GenerateSlotsDialog> {
                   Expanded(
                     child: TextField(
                       controller: breakStartController,
+                      readOnly: true,
+                      onTap: ()=> _pickTime(breakStartController),
                       decoration: const InputDecoration(
                         labelText: "Break Start",
-                        hintText: "13:00",
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        suffixIcon: Icon(Icons.access_time),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
                       ),
                     ),
                   ),
@@ -173,10 +302,15 @@ class _GenerateSlotsDialogState extends State<GenerateSlotsDialog> {
                   Expanded(
                     child: TextField(
                       controller: breakEndController,
+                      readOnly: true,
+                      onTap: ()=> _pickTime(breakEndController),
                       decoration: const InputDecoration(
                         labelText: "Break End",
-                        hintText: "14:00",
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        suffixIcon: Icon(Icons.access_time),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
                       ),
                     ),
                   ),
@@ -192,9 +326,7 @@ class _GenerateSlotsDialogState extends State<GenerateSlotsDialog> {
           child: const Text("Cancel"),
         ),
         ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(110, 40),
-          ),
+          style: ElevatedButton.styleFrom(minimumSize: const Size(110, 40)),
           onPressed: _isSubmitting ? null : _submit,
           child: _isSubmitting
               ? const SizedBox(
