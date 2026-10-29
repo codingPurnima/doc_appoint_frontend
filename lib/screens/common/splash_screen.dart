@@ -20,35 +20,47 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> checkLogin() async {
+    final splashStartedAt = DateTime.now();
     final authService = AuthService();
 
-    // Load tokens from SharedPreferences
     await authService.loadTokens();
 
     String? token = AuthService.accessToken;
-    String? role = AuthService.role;
+    final role = AuthService.role;
 
-    // If access token missing, try refreshing
     token ??= await authService.refreshAccessToken();
 
-    await Future.delayed(const Duration(milliseconds: 300));
+    // Keep the custom splash visible for at least 1.2 seconds.
+    final elapsed = DateTime.now().difference(splashStartedAt);
+    const minimumSplashDuration = Duration(milliseconds: 1200);
+
+    if (elapsed < minimumSplashDuration) {
+      await Future.delayed(minimumSplashDuration - elapsed);
+    }
 
     if (!mounted) return;
 
     if (AuthService.isLoggedIn && role == "doctor") {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const DoctorMainScreen()),
+        MaterialPageRoute(
+          builder: (_) => const DoctorMainScreen(),
+        ),
       );
-    } else if (AuthService.isLoggedIn && role == "patient") {
+    } else if (AuthService.isLoggedIn &&
+        role == "patient") {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const PatientMainScreen()),
+        MaterialPageRoute(
+          builder: (_) => const PatientMainScreen(),
+        ),
       );
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        MaterialPageRoute(
+          builder: (_) => const LoginScreen(),
+        ),
       );
     }
   }
@@ -62,24 +74,19 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 88,
-                height: 88,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                clipBehavior: Clip.antiAlias,
+              SizedBox(
+                width: 120,
+                height: 120,
                 child: Image.asset(
                   'assets/icons/DocAppointLogo.png',
-                  fit: BoxFit.cover,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(
+                      Icons.broken_image,
+                      color: Colors.white,
+                      size: 48,
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 24),
