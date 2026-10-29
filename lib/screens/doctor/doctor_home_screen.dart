@@ -14,12 +14,32 @@ class DoctorHomeScreen extends ConsumerStatefulWidget {
 }
 
 class _DoctorHomeScreenState extends ConsumerState<DoctorHomeScreen> {
+  DateTime _selectedDate = DateTime.now();
+
   @override
   void initState() {
     super.initState();
     Future.microtask(() {
       ref.read(doctorHomeProvider.notifier).fetchSlots();
     });
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      helpText: 'Select schedule date',
+    );
+
+    if (picked == null || !mounted) return;
+
+    setState(() {
+      _selectedDate = picked;
+    });
+
+    await ref.read(doctorHomeProvider.notifier).fetchSlots(date: picked);
   }
 
   Widget buildLegend() {
@@ -52,7 +72,7 @@ class _DoctorHomeScreenState extends ConsumerState<DoctorHomeScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(doctorHomeProvider);
     final notifier = ref.read(doctorHomeProvider.notifier);
-    final visibleSlots = state.slots.where((slot) => !slot.isExpired).toList();
+    final visibleSlots = state.slots;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -73,10 +93,10 @@ class _DoctorHomeScreenState extends ConsumerState<DoctorHomeScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Column(
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       "Your Schedule",
                       style: TextStyle(
                         fontSize: 20,
@@ -85,33 +105,50 @@ class _DoctorHomeScreenState extends ConsumerState<DoctorHomeScreen> {
                         letterSpacing: -0.3,
                       ),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
-                      "Manage today's consultation slots",
-                      style: TextStyle(
+                      "Manage slots for ${_selectedDate.day.toString().padLeft(2, '0')}/"
+                      "${_selectedDate.month.toString().padLeft(2, '0')}/"
+                      "${_selectedDate.year}",
+                      style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.textSecondary,
                       ),
                     ),
                   ],
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    "Total ${visibleSlots.length} ",
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
+
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        "Total ${visibleSlots.length}",
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 6),
+                    IconButton(
+                      onPressed: _pickDate,
+                      tooltip: "Select schedule date",
+                      icon: const Icon(
+                        Icons.calendar_month_outlined,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -300,7 +337,7 @@ class _DoctorHomeScreenState extends ConsumerState<DoctorHomeScreen> {
             context: context,
             builder: (context) => GenerateSlotsDialog(
               onSlotsGenerated: () async {
-                await notifier.fetchSlots();
+                await notifier.fetchSlots(date: _selectedDate);
               },
             ),
           );

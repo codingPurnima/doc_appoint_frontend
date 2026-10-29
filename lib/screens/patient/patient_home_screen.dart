@@ -44,29 +44,90 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
 
   List<Slot> slots = [];
   bool isLoading = true;
+  DateTime _selectedDate = DateUtils.dateOnly(DateTime.now());
 
   DoctorProfile? _doctorProfile;
   bool _isDoctorProfileLoading = false;
   String? _doctorProfileError;
 
-  Future<void> fetchSlots() async {
-    final apiService = ApiService();
-    final today = DateTime.now().toIso8601String().split("T")[0];
+  String _dateForApi(DateTime date) {
+    final year = date.year.toString().padLeft(4, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
 
-    final result = await apiService.getAvailableSlots(today);
+    return '$year-$month-$day';
+  }
 
-    if (!mounted) return;
+  String _displayDate(DateTime date) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
 
-    if (result != null) {
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
+  Future<void> fetchSlots({DateTime? date}) async {
+    final requestedDate = date ?? _selectedDate;
+
+    setState(() => isLoading = true);
+
+    try {
+      final result = await ApiService().getAvailableSlots(
+        _dateForApi(requestedDate),
+      );
+
+      debugPrint('Selected date: ${_dateForApi(_selectedDate)}');
+debugPrint('API returned ${result?.length ?? "null"} slots');
+debugPrint('First slot: ${result?.isNotEmpty == true ? result!.first : "none"}');
+
+      if (!mounted) return;
+
       setState(() {
-        slots = result.map((json) => Slot.fromJson(json)).toList();
+        // Avoid displaying results for a date that has since changed.
+        if (_dateForApi(requestedDate) == _dateForApi(_selectedDate)) {
+          slots = result?.map((json) => Slot.fromJson(json)).toList() ?? [];
+        }
         isLoading = false;
       });
-    } else {
+    } catch (_) {
+      if (!mounted) return;
+
       setState(() {
+        slots = [];
         isLoading = false;
       });
     }
+  }
+
+  Future<void> _selectDate() async {
+    final today = DateUtils.dateOnly(DateTime.now());
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate.isBefore(today) ? today : _selectedDate,
+      firstDate: today,
+      lastDate: today.add(const Duration(days: 365)),
+      helpText: 'SELECT APPOINTMENT DATE',
+    );
+
+    if (picked == null || !mounted) return;
+
+    setState(() {
+      _selectedDate = DateUtils.dateOnly(picked);
+    });
+
+    await fetchSlots(date: _selectedDate);
   }
 
   void _bookSlot(Slot slot) {
@@ -497,7 +558,7 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      "Today's Open Consultations",
+                      'Open consultations for ${_displayDate(_selectedDate)}',
                       style: TextStyle(
                         fontSize: 13,
                         color: AppColors.textSecondary,
@@ -527,6 +588,35 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
               ],
             ),
           ),
+
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            color: Colors.white,
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.calendar_month_outlined,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Text(
+                    'Appointment date',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: isLoading ? null : _selectDate,
+                  icon: const Icon(Icons.calendar_today, size: 16),
+                  label: Text(_displayDate(_selectedDate)),
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: isLoading
                 ? const Center(
@@ -546,11 +636,12 @@ class _PatientHomeScreenState extends State<PatientHomeScreen> {
                     ),
                   )
                 : availableSlots.isEmpty
-                ? const EmptyStateView(
+                ? EmptyStateView(
                     icon: Icons.event_busy_outlined,
-                    title: "No slots available today",
+                    title: "No slots available",
                     subtitle:
-                        "Please check back later for newly released openings.",
+                        "There are no available appointments on "
+                        "${_displayDate(_selectedDate)}. Try another date.",
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(
