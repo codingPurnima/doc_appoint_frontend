@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:doc_appoint_frontend/screens/common/login_screen.dart';
 import 'package:doc_appoint_frontend/screens/common/profile_screen.dart';
 import 'package:doc_appoint_frontend/services/api_service.dart';
+import 'register_as_doctor_screen.dart';
 import 'package:doc_appoint_frontend/services/auth_service.dart';
 import 'package:doc_appoint_frontend/theme/app_theme.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +21,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   Map<String, dynamic>? user;
   List<dynamic> appointments = [];
   bool isLoading = true;
+  bool _doctorApplicationSubmitted = false;
 
   // late final RazorpayService _razorpayService;
 
@@ -100,6 +102,22 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
       setState(() {
         isLoading = false;
       });
+    }
+  }
+
+  Future<void> openDoctorApplication() async {
+    final submitted = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RegisterAsDoctorScreen(
+          onSubmit: (data) => ApiService().postRequest('/doctors/apply', data),
+        ),
+      ),
+    );
+
+    if (!mounted) return;
+    if (submitted == true) {
+      setState(() => _doctorApplicationSubmitted = true);
     }
   }
 
@@ -221,6 +239,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
       title: "Patient Profile",
       onLogout: logout,
       onCancelOrCompleteAppointment: cancelAppointment,
+      /*
       // onResumePayment: (appointment) {
       //   final appointmentId = int.tryParse(
       //     appointment['appointment_id']?.toString() ?? '',
@@ -237,7 +256,11 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
 
       // _razorpayService.resumePayment(appointmentId);
       // },
+      */
       onDeleteAccount: deleteAccount,
+      showDoctorApplication: true,
+      doctorApplicationSubmitted: _doctorApplicationSubmitted,
+      onApplyAsDoctor: openDoctorApplication,
     );
   }
 }

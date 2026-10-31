@@ -12,6 +12,9 @@ class ProfileScreen extends StatelessWidget {
   final Function(Map<String, dynamic>)? onResumePayment;
   final String title;
   final Future<bool> Function()? onDeleteAccount;
+  final VoidCallback? onApplyAsDoctor;
+  final bool showDoctorApplication;
+  final bool doctorApplicationSubmitted;
 
   const ProfileScreen({
     super.key,
@@ -23,6 +26,9 @@ class ProfileScreen extends StatelessWidget {
     this.onCancelOrCompleteAppointment,
     this.onResumePayment,
     this.onDeleteAccount,
+    this.onApplyAsDoctor,
+    this.showDoctorApplication = false,
+    this.doctorApplicationSubmitted = false,
   });
 Future<void> _confirmDeleteAccount(BuildContext context) async {
   final confirmed = await showDialog<bool>(
@@ -109,142 +115,229 @@ Future<void> _confirmDeleteAccount(BuildContext context) async {
           ),
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // User Profile Card
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(
-                bottom: BorderSide(color: AppColors.cardBorder, width: 1),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // User Profile Card
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  bottom: BorderSide(color: AppColors.cardBorder, width: 1),
+                ),
               ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.08),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      userName.isNotEmpty ? userName[0].toUpperCase() : "U",
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
+              child: Row(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.08),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        userName.isNotEmpty ? userName[0].toUpperCase() : "U",
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        userName,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          userName,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
+                        if (userPhone.toString().isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.phone_outlined,
+                                size: 14,
+                                color: AppColors.textMuted,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                userPhone.toString(),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDoctor
+                          ? AppColors.completedBg
+                          : AppColors.availableBg,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDoctor
+                            ? AppColors.completedBorder
+                            : AppColors.availableBorder,
                       ),
-                      if (userPhone.toString().isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Row(
+                    ),
+                    child: Text(
+                      isDoctor ? "Doctor" : "Patient",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isDoctor
+                            ? AppColors.completedText
+                            : AppColors.availableText,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        
+            if (showDoctorApplication && !isDoctor)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: doctorApplicationSubmitted
+                        ? AppColors.availableBg
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: doctorApplicationSubmitted
+                          ? AppColors.availableBorder
+                          : AppColors.cardBorder,
+                    ),
+                  ),
+                  child: doctorApplicationSubmitted
+                      ? const Row(
                           children: [
-                            const Icon(
-                              Icons.phone_outlined,
-                              size: 14,
-                              color: AppColors.textMuted,
+                            Icon(Icons.hourglass_top_rounded,
+                                color: AppColors.availableText),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Doctor application submitted. Your details are awaiting verification.',
+                                style: TextStyle(
+                                  color: AppColors.availableText,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
-                            const SizedBox(width: 6),
-                            Text(
-                              userPhone.toString(),
-                              style: const TextStyle(
-                                fontSize: 13,
+                          ],
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(
+                                  Icons.medical_services_outlined,
+                                  color: AppColors.primary,
+                                  size: 21,
+                                ),
+                                SizedBox(width: 9),
+                                Expanded(
+                                  child: Text(
+                                    'Are you a medical professional?',
+                                    style: TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            const Text(
+                              'Apply to join DocAppoint as a verified doctor.',
+                              style: TextStyle(
                                 color: AppColors.textSecondary,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            OutlinedButton.icon(
+                              onPressed: onApplyAsDoctor,
+                              icon: const Icon(Icons.arrow_forward_rounded, size: 17),
+                              label: const Text('Register as a Doctor'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.primary,
+                                side: const BorderSide(color: AppColors.cardBorder),
+                                minimumSize: const Size(double.infinity, 44),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
                             ),
                           ],
                         ),
-                      ],
-                    ],
-                  ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDoctor
-                        ? AppColors.completedBg
-                        : AppColors.availableBg,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isDoctor
-                          ? AppColors.completedBorder
-                          : AppColors.availableBorder,
-                    ),
-                  ),
-                  child: Text(
-                    isDoctor ? "Doctor" : "Patient",
+              ),
+        
+            // Section Title
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Appointments History",
                     style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isDoctor
-                          ? AppColors.completedText
-                          : AppColors.availableText,
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.2,
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-
-          // Section Title
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  "Appointments History",
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                    letterSpacing: -0.2,
+                  Text(
+                    "${appointments.length} Total",
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textMuted,
+                    ),
                   ),
-                ),
-                Text(
-                  "${appointments.length} Total",
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textMuted,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-
-          // Appointments List
-          Expanded(
-            child: appointments.isEmpty
+        
+            // Appointments List
+            appointments.isEmpty
                 ? const EmptyStateView(
                     icon: Icons.event_note_outlined,
                     title: "No appointments yet",
                     subtitle: "Booked consultations will appear here.",
                   )
                 : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 8,
@@ -259,7 +352,7 @@ Future<void> _confirmDeleteAccount(BuildContext context) async {
                       final endTime = appointment["end_time"]?.toString() ?? "";
                       final patientName =
                           appointment["patient_name"]?.toString() ?? "Patient";
-
+                    
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(16),
@@ -438,8 +531,8 @@ Future<void> _confirmDeleteAccount(BuildContext context) async {
                       );
                     },
                   ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
