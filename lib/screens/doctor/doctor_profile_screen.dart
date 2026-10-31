@@ -1,5 +1,6 @@
 import 'package:doc_appoint_frontend/providers/doctor_profile_provider.dart';
 import 'package:doc_appoint_frontend/screens/common/profile_screen.dart';
+import 'package:doc_appoint_frontend/services/auth_service.dart';
 import 'package:doc_appoint_frontend/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -61,6 +62,26 @@ class _DoctorProfileScreenState extends ConsumerState<DoctorProfileScreen> {
     _profileSubscription?.close();
     super.dispose();
   }
+
+  
+Future<bool> deleteAccount(BuildContext context, WidgetRef ref) async {
+  final success = await AuthService().deleteAccount();
+
+  if (!success) return false;
+  if (!context.mounted) return false;
+
+  await ref.read(doctorProfileProvider.notifier).logout();
+  if (!context.mounted) return false;
+
+  Navigator.pushNamedAndRemoveUntil(
+    context,
+    "/",
+    (_) => false,
+  );
+
+  return true;
+}
+
 
   Future<void> completeAppointment(
     BuildContext context,
@@ -168,6 +189,7 @@ class _DoctorProfileScreenState extends ConsumerState<DoctorProfileScreen> {
       title: "Doctor Profile",
       onCancelOrCompleteAppointment: (id) =>
           completeAppointment(context, ref, id),
+      onDeleteAccount: () => deleteAccount(context, ref),
     );
   }
 }
