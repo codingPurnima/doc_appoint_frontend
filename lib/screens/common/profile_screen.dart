@@ -11,6 +11,7 @@ class ProfileScreen extends StatelessWidget {
   final Function(int)? onCancelOrCompleteAppointment;
   final Function(Map<String, dynamic>)? onResumePayment;
   final String title;
+  final Future<bool> Function()? onDeleteAccount;
 
   const ProfileScreen({
     super.key,
@@ -21,9 +22,49 @@ class ProfileScreen extends StatelessWidget {
     required this.title,
     this.onCancelOrCompleteAppointment,
     this.onResumePayment,
+    this.onDeleteAccount,
   });
+Future<void> _confirmDeleteAccount(BuildContext context) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Delete Account?'),
+      content: const Text(
+        'This action is permanent. Your account and associated '
+        'data will be deleted, and you will be logged out. '
+        'You cannot recover your account afterwards.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, false),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, true),
+          style: TextButton.styleFrom(foregroundColor: Colors.red),
+          child: const Text('Delete Account'),
+        ),
+      ],
+    ),
+  );
 
-  @override
+  if (confirmed != true || onDeleteAccount == null) return;
+
+  final success = await onDeleteAccount!();
+
+  if (!context.mounted) return;
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        success
+            ? 'Account deleted successfully.'
+            : 'Unable to delete account. Please try again.',
+      ),
+    ),
+  );
+}  @override
+  
   Widget build(BuildContext context) {
     if (isLoading) {
       return Scaffold(
@@ -58,6 +99,13 @@ class ProfileScreen extends StatelessWidget {
             onPressed: onLogout,
             icon: const Icon(Icons.logout_rounded),
             tooltip: "Logout",
+          ),
+          IconButton(
+            onPressed: onDeleteAccount == null
+                ? null
+                : () => _confirmDeleteAccount(context),
+            icon: const Icon(Icons.delete_outline, color: Colors.red),
+            tooltip: "Delete Account",
           ),
         ],
       ),
