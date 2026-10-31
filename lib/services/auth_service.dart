@@ -106,6 +106,36 @@ class AuthService {
     await clearSessionData();
   }
 
+  
+Future<bool> deleteAccount() async {
+  final token = _accessToken ??
+      await _secureStorage.read(key: 'access_token');
+
+  if (token == null || token.isEmpty) {
+    return false;
+  }
+
+  try {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/users/me'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      await clearSessionData();
+      return true;
+    }
+
+    return false;
+  } catch (e) {
+    return false;
+  }
+}
+
+
   Future<String?> refreshAccessToken() async {
     final refreshToken =
         _refreshToken ?? await _secureStorage.read(key: 'refresh_token');
