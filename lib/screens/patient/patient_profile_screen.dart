@@ -1,12 +1,13 @@
 import 'dart:convert';
-import 'package:doc_appoint_frontend/config/app_config.dart';
+// import 'package:doc_appoint_frontend/config/app_config.dart';
 import 'package:doc_appoint_frontend/screens/common/login_screen.dart';
 import 'package:doc_appoint_frontend/screens/common/profile_screen.dart';
 import 'package:doc_appoint_frontend/services/api_service.dart';
 import 'package:doc_appoint_frontend/services/auth_service.dart';
 import 'package:doc_appoint_frontend/theme/app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:doc_appoint_frontend/services/razorpay_service.dart';
+
+// import 'package:doc_appoint_frontend/services/razorpay_service.dart';
 
 class PatientProfileScreen extends StatefulWidget {
   const PatientProfileScreen({super.key});
@@ -20,40 +21,50 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   List<dynamic> appointments = [];
   bool isLoading = true;
 
-  late final RazorpayService _razorpayService;
+  // late final RazorpayService _razorpayService;
+
+  Future<bool> deleteAccount() async {
+    final success = await AuthService().deleteAccount();
+
+    if (!mounted) return false;
+
+    if (success) {
+      Navigator.pushNamedAndRemoveUntil(context, "/", (_) => false);
+      return true;
+    }
+
+    return false;
+  }
 
   @override
-  
-@override
-void initState() {
-  super.initState();
+  void initState() {
+    super.initState();
 
-  _razorpayService = RazorpayService(
-      baseUrl: AppConfig.baseUrl,
-      getToken: () async {
-        final auth = AuthService();
-        await auth.loadTokens();
-        return AuthService.accessToken;
-      },
-    );
+    // _razorpayService = RazorpayService(
+    //     baseUrl: AppConfig.baseUrl,
+    //     getToken: () async {
+    //       final auth = AuthService();
+    //       await auth.loadTokens();
+    //       return AuthService.accessToken;
+    //     },
+    //   );
 
-  _razorpayService.onMessage = (message) {
-    if (!mounted) return;
+    // _razorpayService.onMessage = (message) {
+    //   if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  };
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     SnackBar(content: Text(message)),
+    //   );
+    // };
 
-  _razorpayService.onPaymentVerified = (appointmentId) {
+    // _razorpayService.onPaymentVerified = (appointmentId) {
+    //   fetchProfileData();
+    // };
+
+    // _razorpayService.initialize();
+
     fetchProfileData();
-  };
-
-  _razorpayService.initialize();
-
-  fetchProfileData();
-}
-
+  }
 
   Future<void> fetchProfileData() async {
     final api = ApiService();
@@ -178,7 +189,7 @@ void initState() {
 
   @override
   void dispose() {
-    _razorpayService.dispose();
+    // _razorpayService.dispose();
     super.dispose();
   }
 
@@ -210,22 +221,23 @@ void initState() {
       title: "Patient Profile",
       onLogout: logout,
       onCancelOrCompleteAppointment: cancelAppointment,
-      onResumePayment: (appointment) {
-        final appointmentId = int.tryParse(
-          appointment['appointment_id']?.toString() ?? '',
-        );
+      // onResumePayment: (appointment) {
+      //   final appointmentId = int.tryParse(
+      //     appointment['appointment_id']?.toString() ?? '',
+      //   );
 
-        if (appointmentId == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Invalid appointment ID. Please refresh.'),
-            ),
-          );
-          return;
-        }
+      //   if (appointmentId == null) {
+      //     ScaffoldMessenger.of(context).showSnackBar(
+      //       const SnackBar(
+      //         content: Text('Invalid appointment ID. Please refresh.'),
+      //       ),
+      //     );
+      //     return;
+      //   }
 
-        _razorpayService.resumePayment(appointmentId);
-      },
+      // _razorpayService.resumePayment(appointmentId);
+      // },
+      onDeleteAccount: deleteAccount,
     );
   }
 }
